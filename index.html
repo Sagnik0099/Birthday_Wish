@@ -86,49 +86,70 @@ summary { cursor: pointer; width: fit-content; }
 }
 .inbox-field { max-width: 410px; }
 .mobile-readout { display: none; }
-.wish-open { display: none; position: absolute; z-index: 4; left: 50%; bottom: 92px; transform: translateX(-50%) translateY(18px) scale(.96); opacity: 0;
-  border: 1px solid rgba(220,176,102,.72); color: #fff5e7; background: linear-gradient(180deg, rgba(42,27,66,.95), rgba(22,14,44,.96)); border-radius: 999px;
-  padding: 12px 22px; font: 800 12px var(--ui); letter-spacing: .045em; cursor: pointer;
-  box-shadow: 0 14px 38px rgba(0,0,0,.32), 0 0 0 1px rgba(255,239,203,.05) inset; transition: opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease, border-color .25s ease; }
-html.gift-view .wish-open.show { display: inline-flex; align-items: center; justify-content: center; opacity: 1; transform: translateX(-50%) translateY(0) scale(1); animation: wishPulse 2.6s ease-in-out infinite; }
-.wish-open:hover, .wish-open:focus-visible { border-color: var(--gold); background: linear-gradient(180deg, rgba(54,35,82,.98), rgba(31,19,57,.98)); box-shadow: 0 18px 46px rgba(0,0,0,.38), 0 0 0 1px rgba(255,239,203,.08) inset; }
-@keyframes wishPulse { 0%,100% { box-shadow: 0 14px 38px rgba(0,0,0,.32), 0 0 0 0 rgba(220,176,102,.0); } 50% { box-shadow: 0 18px 46px rgba(0,0,0,.38), 0 0 0 8px rgba(220,176,102,.09); } }
+/* Only the single current message is reproduced as accessible HTML within the wheel on small screens. */
+.wish-open { position: absolute; z-index: 4; left: 50%; bottom: clamp(45px, 9vh, 88px);
+  display: none; justify-content: center; align-items: center; gap: 8px;
+  min-width: 206px; min-height: 59px; box-sizing: border-box;
+  transform: translate(-50%,18px) scale(.87); opacity: 0;
+  border: 1px solid rgba(238,199,135,.88); color: #fff4dc;
+  background: linear-gradient(145deg, rgba(53,32,79,.98), rgba(20,12,44,.98)); border-radius: 999px;
+  padding: 16px 29px; font: 800 16px/1.2 var(--ui); letter-spacing: .01em; white-space: nowrap; cursor: pointer;
+  box-shadow: 0 15px 46px rgba(0,0,0,.35), 0 0 36px rgba(220,176,102,.09);
+  transition: opacity .85s ease, transform .85s cubic-bezier(.12,.88,.24,1.12), box-shadow .25s ease;
+}
+html.gift-view .wish-open.show:not([hidden]) { display: inline-flex; opacity: 1; transform: translate(-50%,0) scale(1); animation: wishPulse 3.4s ease-in-out infinite; }
+.wish-open:hover, .wish-open:focus-visible { border-color: #ffe6b0; box-shadow: 0 17px 50px rgba(0,0,0,.4), 0 0 36px rgba(220,176,102,.23); }
+@keyframes wishPulse { 0%,100% { box-shadow: 0 15px 46px rgba(0,0,0,.36),0 0 0 0 rgba(220,176,102,.12); } 50% { box-shadow: 0 15px 46px rgba(0,0,0,.36),0 0 0 12px rgba(220,176,102,0); } }
 .wish-overlay { position: fixed; inset: 0; z-index: 20; background: rgba(6,4,17,.79); backdrop-filter: blur(5px);
   display: grid; place-items: center; padding: 18px; overflow-y: auto; }
 .wish-overlay[hidden] { display: none !important; }
-.wish-dialog { position: relative; width: min(100%, 440px); box-sizing: border-box; border: 1px solid rgba(220,176,102,.33);
-  border-radius: 12px; background: linear-gradient(165deg, #231536 0%, #120b29 90%); padding: 28px 25px 24px;
-  box-shadow: 0 28px 95px rgba(0,0,0,.5); color: var(--text); }
+.wish-dialog { position: relative; width: min(100%, 500px); box-sizing: border-box; border: 1px solid rgba(220,176,102,.33);
+  border-radius: 17px; background: linear-gradient(165deg, #231536 0%, #120b29 90%); padding: 34px 28px 29px;
+  box-shadow: 0 28px 95px rgba(0,0,0,.5); color: var(--text); max-height: calc(100svh - 36px); overflow-y: auto; }
 .wish-dialog h2 { font: italic 400 clamp(34px,6vw,46px)/1.1 var(--display); color: #ffe7b6; margin: 3px 0 8px; text-align: center; }
-.wish-dialog p { color: var(--muted); margin: 0 auto 22px; max-width: 310px; text-align: center; font-size: 13px; }
+.wish-dialog p { color: var(--muted); margin: 0 auto 22px; max-width: 370px; text-align: center; font-size: 16px; }
 .wish-ornament { color: var(--gold); letter-spacing: .5em; font-size: 15px; text-align: center; }
 .wish-dialog form { display: grid; gap: 9px; }
-.wish-dialog label { margin-top: 8px; color: #dfd1e3; font: 700 11px var(--ui); letter-spacing: .04em; }
-.wish-dialog input,.wish-dialog textarea { background: #0f0a23; border-color: #48355b; font-size: 15px; }
-.wish-dialog textarea { min-height: 120px; }
+.wish-dialog label { margin-top: 8px; color: #dfd1e3; font: 700 14px var(--ui); letter-spacing: .03em; }
+.wish-dialog input,.wish-dialog textarea { background: #0f0a23; border-color: #48355b; font-size: 17px; padding: 13px 14px; }
+.wish-dialog textarea { min-height: 150px; }
 .wish-dialog input:focus,.wish-dialog textarea:focus { outline: 1px solid var(--gold); border-color: var(--gold); }
 .wish-dialog .optional { color: var(--muted); font-weight: 500; }
 .wish-close { position: absolute; top: 7px; right: 11px; font: 28px var(--ui); color: var(--muted); border:0; background: transparent; cursor:pointer; padding:5px 10px; }
 .wish-close:hover { color: white; }
-.wish-send { width: 100%; margin-top: 11px; padding: 12px 15px; border: 0; border-radius: 7px; background: var(--gold); color: var(--gold-ink);
-  font: 800 12px var(--ui); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+.wish-send { width: 100%; margin-top: 11px; padding: 17px 15px; border: 0; border-radius: 7px; background: var(--gold); color: var(--gold-ink);
+  font: 800 16px var(--ui); letter-spacing: .03em; text-transform: uppercase; cursor: pointer; }
 .wish-send:disabled { opacity: .6; cursor: wait; }
 .wish-result { min-height: 1em; text-align: center; font-size: 12px; line-height: 1.5; color: #e8c693; }
 .wish-result.error { color: #ff94bd; }
 .honeypot { position:absolute; left:-10000px; width: 1px; height: 1px; overflow:hidden; }
 @media (max-width: 620px) {
-  /* Preserve the original wheel, but give its currently active text a genuinely legible mobile companion. */
-  .stage { min-height: 740px; }
-  .mobile-readout { position: absolute; left: 18px; right: 18px; bottom: 58px;
-    display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; text-align: center;
-    text-shadow: 0 2px 15px rgba(9,6,22,.9); }
-  .mobile-kicker { color: var(--gold); font: 700 11px var(--ui); letter-spacing: .14em; text-transform: uppercase; }
-  .mobile-phrase { color: #fff1df; font: italic 400 clamp(30px, 8vw, 38px)/1.12 var(--display); max-width: 360px;
-    overflow-wrap: anywhere; white-space: pre-line; }
-  .mobile-counter { font: 700 11px var(--ui); letter-spacing: .2em; color: #d4bbdf; }
-  .mobile-name { color: #ffe3a6; font: 800 13px var(--ui); letter-spacing: .24em; text-transform: uppercase; max-width: 320px; overflow-wrap: anywhere; }
+  .stage { min-height: max(680px, 100svh); }
+  .mobile-readout {
+    position: absolute; display: flex; z-index: 2;
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: min(45vw, 220px); min-height: 158px; max-height: 220px;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; box-sizing: border-box; pointer-events: none; text-align: center;
+    text-shadow: 0 2px 16px rgba(10,5,26,.99), 0 1px 3px rgba(0,0,0,.9);
+  }
+  .mobile-kicker { font: 800 clamp(8px, 2.2vw, 10px)/1.55 var(--ui); letter-spacing: .075em; color: #ffdd96; }
+  .mobile-phrase { color: #fff6e9; font: italic 400 clamp(19px, 5.6vw, 25px)/1.06 var(--display);
+    max-width: 100%; overflow-wrap: break-word; white-space: pre-line; transition: opacity .18s ease; }
+  .mobile-phrase.compact { font-size: clamp(16px, 4.45vw, 21px); line-height: 1.09; }
+  .mobile-counter { font: 800 clamp(10px, 2.65vw, 12px) var(--ui); letter-spacing: .16em; color: #f1c989; }
+  .mobile-name { color: #ffe4a9; font: 800 clamp(14px, 3.7vw, 18px)/1.15 var(--ui); letter-spacing: .055em; text-transform: uppercase;
+    max-width: 100%; overflow-wrap: anywhere; }
+  .mobile-name.compact { font-size: clamp(11px, 3vw, 14px); }
+  .mobile-age { font: 700 10px/1.15 var(--ui); letter-spacing: .1em; color: #edc996; }
   .hint { bottom: 7px; font-size: 9px; }
-  .wish-open { bottom: 130px; font-size: 11px; padding: 12px 20px; }
+  .wish-open { bottom: 49px; min-height: 58px; min-width: 213px; font-size: 16px; padding: 15px 30px; }
+}
+@media (max-width: 360px) {
+  .mobile-readout { width: 45vw; gap: 5px; }
+  .mobile-phrase { font-size: 19px; }
+  .mobile-name { font-size: 13px; }
+  .wish-open { bottom: 42px; }
 }
 @media (prefers-reduced-motion: reduce) { .wish-overlay { backdrop-filter: none; } }
 </style>
@@ -136,11 +157,12 @@ html.gift-view .wish-open.show { display: inline-flex; align-items: center; just
 <main class="stage" id="stage">
   <canvas id="cv" role="img" aria-label="An animated wheel of 100 birthday wishes that ends with fireworks, balloons and confetti"></canvas>
   <div class="hint">Tap or click anywhere for fireworks</div>
-  <div class="mobile-readout" id="mobileReadout" aria-live="polite" aria-atomic="true">
-    <div class="mobile-kicker">A hundred little wishes, all wrapped in love for you</div>
+  <div class="mobile-readout" id="mobileReadout" aria-label="The current birthday wish">
+    <div class="mobile-kicker">A HUNDRED WISHES<br>FOR YOUR BRIGHTEST YEAR YET</div>
     <div class="mobile-phrase" id="mobilePhrase">Happy Birthday!</div>
     <div class="mobile-counter" id="mobileCounter"></div>
     <div class="mobile-name" id="mobileName"></div>
+    <div class="mobile-age" id="mobileAge"></div>
   </div>
   <button type="button" class="wish-open" id="openWish" hidden>✦ Make a wish</button>
 </main>
@@ -182,7 +204,7 @@ html.gift-view .wish-open.show { display: inline-flex; align-items: center; just
     <button class="wish-close" id="closeWish" type="button" aria-label="Close wish form">×</button>
     <div class="wish-ornament" aria-hidden="true">✦ ✧ ✦</div>
     <h2 id="wishTitle">Make a wish</h2>
-    <p>Leave a little happiness for the person who sent you this gift.</p>
+    <p>Send a cheerful note to the friend who made this birthday surprise.</p>
     <form id="wishForm">
       <label for="wishFrom">Your name <span class="optional">(optional)</span></label>
       <input id="wishFrom" name="name" maxlength="80" placeholder="Your name" autocomplete="name">
@@ -198,12 +220,12 @@ html.gift-view .wish-open.show { display: inline-flex; align-items: center; just
 <script>
 (() => {
   'use strict';
-  const DEFAULT_WISHES = ["Happy Birthday!", "Many happy returns", "Cheers to you today", "Make a wish!", "Another year of you", "You deserve the best", "Wishing you joy", "Hope it's a great one", "Eat all the cake", "Today is yours", "Shine bright today", "Celebrate big", "May your dreams come true", "Here's to your year ahead", "You make the world better", "Blow out every candle", "Age is just a number", "Fabulous at any age", "Better with every year", "Love and laughter today", "Wishing you endless smiles", "Party like it's your day", "May all your wishes come true", "Good health and happiness", "Great things are coming", "You're one in a million", "Thankful for you", "So glad you were born", "Hope today feels magical", "Sending you big hugs", "Enjoy every moment", "The best is yet to come", "You glow brighter each year", "Adventures await you", "May this year be your best", "Cake, candles, confetti!", "Treat yourself today", "You've earned this day", "Rest, laugh, celebrate", "Warmest wishes to you", "Joy to you today", "Here's to many more", "Life looks good on you", "Wishing you peace and joy", "Stay wonderful always", "Keep being you", "Hope your day is sweet", "Wrapped in love today", "A toast to you", "Raise a glass to you", "You're a gift to us all", "Dream big this year", "May luck follow you", "Forever young at heart", "Time flies, you shine", "Cheers to another lap", "Blessings on your day", "May joy find you daily", "Happiest of birthdays", "What a year it's been", "Level up! New year, new you", "Sparkle all day long", "Your smile lights up rooms", "The world is brighter with you", "Wishing you pure happiness", "Hope all your hopes come true", "Go make some memories", "Fill today with fun", "Love you lots today", "Another trip around the sun", "Better and better each year", "Wishing you sweet surprises", "Celebrate being you", "It's your time to shine", "Hugs, cake and good vibes", "Every day with you is a gift", "May your heart be full", "Hope you feel so loved", "You're simply the best", "Make today unforgettable", "Here's to health and wealth", "Bright days ahead for you", "Onward to new adventures", "Smile, it's your birthday", "You make life more fun", "Grateful you're in my life", "Cheers to your next chapter", "May all your days be golden", "Sending birthday magic", "Hope it's everything you want", "Joy today and always", "A day as lovely as you", "Happy day, happy heart", "Cheers, friend!", "Wishing you the world", "Love, light and laughter", "You are so loved", "Thank you for being you", "Many more candles to blow", "Happy Birthday to you!"];
+  const DEFAULT_WISHES = ["Happy Birthday!", "Many happy returns", "Cheers to you today", "Make a wish!", "Another year of you", "You deserve the best", "Wishing you joy", "Hope it's a great one", "Eat all the cake", "Today is yours", "Shine bright today", "Celebrate big", "May your dreams come true", "Here's to your year ahead", "You make things more fun", "Blow out every candle", "Age is just a number", "Fabulous at any age", "Better with every year", "Laughter and good times today", "Wishing you endless smiles", "Party like it's your day", "May all your wishes come true", "Good health and happiness", "Great things are coming", "You really are one of a kind", "Cheers to our friendship", "So glad we became friends", "Hope today feels unforgettable", "Sending you good vibes", "Enjoy every moment", "The best is yet to come", "You keep getting more amazing", "Adventures await you", "May this year be your best", "Cake, candles, confetti!", "Treat yourself today", "You've earned this day", "Rest, laugh, celebrate", "Warmest wishes to you", "Joy to you today", "Here's to many more", "Life looks good on you", "Wishing you peace and joy", "Stay wonderful always", "Keep being you", "Hope your day is sweet", "Surrounded by happy moments", "A toast to your next adventure", "Raise a glass to you", "You make every day brighter", "Dream big this year", "May luck follow you", "Forever young at heart", "Time flies, you shine", "Cheers to another lap", "Blessings on your day", "May joy find you daily", "Happiest of birthdays", "What a year it's been", "Level up! New year, new you", "Sparkle all day long", "Keep spreading those smiles", "Keep making the world brighter", "Wishing you pure happiness", "Hope all your hopes come true", "Go make some memories", "Fill today with fun", "You deserve a brilliant day", "Another trip around the sun", "Better and better each year", "Wishing you sweet surprises", "Celebrate being you", "It's your time to shine", "Cake, laughs and good vibes", "Every adventure is better with friends", "May your days be full of joy", "Hope you feel appreciated", "You're simply the best", "Make today unforgettable", "Here's to health and wealth", "Bright days ahead for you", "Onward to new adventures", "Smile, it's your birthday", "Life is more fun with friends", "Glad to call you my friend", "Cheers to your next chapter", "May all your days be golden", "Sending you birthday cheer", "Hope it's everything you want", "Joy today and always", "A day as wonderful as you", "Happy day, happy heart", "Cheers to you, friend!", "Wishing you the world", "Light, laughter and good memories", "You are truly appreciated", "Thank you for being you", "Many more candles to blow", "Happy Birthday to you!"];
 
   // ---------- configuration (frame units match the 16 ms tick of the Python original) ----------
   const TAU = Math.PI * 2, BOX = 800, STEP_MS = 16;
   const R_INNER = 182, R_OUTER = 342, R_RING = 366, SLIDE = 18, FADE = 40;
-  const REVEAL = 9, GREET = 60, IDLE_AFTER = 150, IDLE_EVERY = 340, CENTRE_HOLD = 125;
+  const REVEAL = 42, GREET = 82, IDLE_AFTER = 165, IDLE_EVERY = 340;
   const SPIN = 0.0006, BOOST = 0.0006, SWEEP_SPEED = 0.22, SWEEP_W = 3.0;
   const MAX_SPARKS = 600, MAX_BALLOONS = 6, CONFETTI_N = 70, BOKEH_N = 14, STAR_N = 140;
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -231,9 +253,16 @@ html.gift-view .wish-open.show { display: inline-flex; align-items: center; just
     view.dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = Math.max(1, Math.round(r.width * view.dpr));
     cv.height = Math.max(1, Math.round(r.height * view.dpr));
-    view.s = Math.min(r.width, r.height) / BOX;
+    const giftBottomRoom = document.documentElement.classList.contains('gift-view') ? 120 : 0;
+    view.s = Math.min(r.width, Math.max(300, r.height - giftBottomRoom)) / BOX;
     view.hw = r.width / 2 / view.s;
     view.hh = r.height / 2 / view.s;
+    // Anchor the delayed button underneath the wheel rather than to the viewport edge.
+    // Reserve extra space on wide screens where the ring would otherwise reach the bottom.
+    const buttonTop = Math.min(r.height - 84, r.height / 2 + R_RING * view.s + 27);
+    const wishButton = $('openWish');
+    if (wishButton) { wishButton.style.top = `${buttonTop}px`; wishButton.style.bottom = 'auto'; }
+    if (wishes && wishes.length) fitFont();
   }
 
   // ---------- state ----------
@@ -242,10 +271,22 @@ html.gift-view .wish-open.show { display: inline-flex; align-items: center; just
   let rng = Math.random, S, spokes, bokeh, stars, confetti, balloons, sparks, rockets, meteor, shock, fontPx = 10;
 
   function fitFont() {
-    for (fontPx = 12; fontPx > 7; fontPx--) {
+    // Mobile: larger lettering, shorter rim labels; the full message stays in the center.
+    // Displaying all 100 full sentences at this size is geometrically impossible.
+    if (window.innerWidth <= 620) { fontPx = 17; return; }
+    for (fontPx = 14; fontPx > 10; fontPx--) {
       ctx.font = `500 ${fontPx}px ${UI}`;
       if (Math.max(...wishes.map((w) => ctx.measureText(w).width)) <= R_OUTER - R_INNER) return;
     }
+  }
+  function rimLabel(text) {
+    if (window.innerWidth > 620) return text;
+    const max = R_OUTER - R_INNER - 6;
+    ctx.font = `700 ${fontPx}px ${UI}`;
+    if (ctx.measureText(text).width <= max) return text;
+    let shortened = text;
+    while (shortened.length > 4 && ctx.measureText(shortened + '…').width > max) shortened = shortened.slice(0,-1);
+    return shortened.trimEnd() + '…';
   }
 
   function reset(preroll = 0) {
@@ -269,9 +310,13 @@ html.gift-view .wish-open.show { display: inline-flex; align-items: center; just
   function setCentre(text, counter, index, tint, kind, len = 14) {
     S.prev = S.cur !== null ? { text: S.text, counter: S.counter, tint: S.tint } : null;
     S.cur = index; S.curSince = S.frame; S.tint = tint; S.text = text; S.counter = counter; S.kind = kind; S.fadeLen = len;
-    $('mobilePhrase').textContent = text;
+    const phraseEl = $('mobilePhrase');
+    phraseEl.textContent = text;
+    phraseEl.classList.toggle('compact', text.length > 27 || text.includes('\n'));
     $('mobileCounter').textContent = counter;
-    $('mobileName').textContent = person.name ? `For ${person.name}` : ''; 
+    $('mobileName').textContent = person.name.toUpperCase();
+    $('mobileName').classList.toggle('compact', person.name.length > 15);
+    $('mobileAge').textContent = person.age ? `TURNING ${person.age}` : '';
   }
   const showWish = (i, len = 14) => setCentre(wishes[i], `N° ${String(i + 1).padStart(3, '0')}`, i, mix(CREAM, spokes[i].color, .18), 'wish', len);
   const greeting = () => person.name ? `Happy Birthday,\n${person.name}!` : 'Happy Birthday!';
@@ -298,7 +343,7 @@ html.gift-view .wish-open.show { display: inline-flex; align-items: center; just
   // ---------- simulation ----------
   function revealNext() {
     spokes[S.shown].born = S.frame;
-    if (S.cur === null || S.frame - S.curSince >= CENTRE_HOLD) showWish(S.shown, 18); // hold each readable wish ~2 seconds
+    showWish(S.shown, 12); // Every wish appears in order, once per 42 frames (~0.67s).
     S.shown++;
     if (S.shown === n) {
       S.doneAt = S.frame;
@@ -414,46 +459,70 @@ html.gift-view .wish-open.show { display: inline-flex; align-items: center; just
       ctx.beginPath(); ctx.moveTo(sx - 3, b.y + 24); ctx.lineTo(sx + 3, b.y + 24); ctx.lineTo(sx, b.y + 18); ctx.fillStyle = rgb(b.color, .78); ctx.fill();
       ctx.beginPath(); ctx.ellipse(sx - 6, b.y - 8, 3, 5, -.5, 0, TAU); ctx.fillStyle = rgb(FLASH, .55); ctx.fill();
     }
-    // spokes
-    ctx.font = `500 ${fontPx}px ${UI}`;
+    // spokes: keep all 100 wishes. On small screens, cycle through 3 interleaved
+    // readable sets instead of piling 100 microscopic overlapping lines together.
+    const mobileWheel = window.innerWidth <= 620;
+    const displayPhase = Math.floor(f / 205) % 3;
+    ctx.font = `${mobileWheel ? 700 : 500} ${fontPx}px ${UI}`;
     const finished = S.doneAt !== null, sweep = calm ? 0 : (f * SWEEP_SPEED) % n;
     for (let i = 0; i < n; i++) {
       const sp = spokes[i]; if (sp.born === null) continue;
+      if (mobileWheel && i !== S.cur && i % 3 !== displayPhase) continue;
       const u = clamp((f - sp.born) / FADE), e = 1 - Math.pow(1 - u, 3);
       const a = (((sp.angle + S.rot) % TAU) + TAU) % TAU, r = R_INNER + (1 - e) * SLIDE;
       let glow = 0;
       if (finished && !calm) { let d = Math.abs(i - sweep); d = Math.min(d, n - d); glow = Math.exp(-Math.pow(d / SWEEP_W, 2)) * .65; }
       const pop = u < .6 ? .9 * Math.sin(Math.PI * clamp((u - .1) / .5)) : 0;
-      const fl = Math.max(glow, pop), base = .82 * e;
+      const active = S.kind === 'wish' && i === S.cur ? .35 : 0;
+      const fl = Math.max(glow, pop, active), base = .85 * e;
       ctx.fillStyle = rgb(mix(sp.color, FLASH, fl), base + (1 - base) * fl);
       const left = a > Math.PI / 2 && a < 3 * Math.PI / 2;
       ctx.save(); ctx.translate(r * Math.cos(a), -r * Math.sin(a)); ctx.rotate(left ? Math.PI - a : -a);
-      ctx.textAlign = left ? 'right' : 'left'; ctx.fillText(sp.text, 0, 0); ctx.restore();
+      ctx.textAlign = left ? 'right' : 'left'; ctx.fillText(mobileWheel ? rimLabel(sp.text) : sp.text, 0, 0); ctx.restore();
     }
-    // centre
-    const kc = clamp((f - 8) / 40);
-    ctx.textAlign = 'center';
-    ctx.font = `800 10px ${UI}`; ctx.fillStyle = rgb(GOLD, .85 * kc);
-    ctx.fillText('A   H U N D R E D   L I T T L E   W I S H E S', 0, -72);
-    ctx.fillText('W R A P P E D   I N   L O V E   F O R   Y O U', 0, -56);
-    if (S.cur !== null) {
-      const fe = clamp((f - S.curSince) / S.fadeLen);
-      const phrase = (o, alpha) => {
-        if (alpha <= 0) return;
-        let size = 27; ctx.font = `italic 400 ${size}px ${SERIF}`;
-        let lines = wrap(o.text, 250);
-        if (lines.length > 2) { size = 22; ctx.font = `italic 400 ${size}px ${SERIF}`; lines = wrap(o.text, 250); }
-        const lh = size * 1.08, y0 = -2 - (lines.length - 1) * lh / 2;
-        ctx.fillStyle = rgb(o.tint, alpha);
-        lines.forEach((ln, i) => ctx.fillText(ln, 0, y0 + i * lh));
-        ctx.font = `800 11px ${UI}`; ctx.fillStyle = rgb(GOLD, .8 * alpha); ctx.fillText(o.counter, 0, 72);
-      };
-      if (S.prev) phrase(S.prev, 1 - fe * 2);      // old wish leaves, then the new one arrives
-      phrase(S, fe * 2 - 1);
+    // centre: Canvas on desktop. On phones the same current message is shown
+    // by ONE larger HTML layer at precisely the wheel center (never below it).
+    if (window.innerWidth > 620) {
+      const kc = clamp((f - 8) / 40);
+      ctx.textAlign = 'center';
+      ctx.font = `800 13px ${UI}`; ctx.fillStyle = rgb(GOLD, .94 * kc);
+      ctx.fillText('A   H U N D R E D   W I S H E S', 0, -101);
+      ctx.font = `800 12px ${UI}`;
+      ctx.fillText('F O R   Y O U R   B R I G H T E S T   Y E A R   Y E T', 0, -82);
+      if (S.cur !== null) {
+        const fe = clamp((f - S.curSince) / S.fadeLen);
+        const phrase = (o, alpha) => {
+          if (alpha <= 0) return;
+          let size = 38, lines = [];
+          while (size > 24) {
+            ctx.font = `italic 400 ${size}px ${SERIF}`;
+            lines = wrap(o.text, 296);
+            if (lines.length <= 3 && ctx.measureText(lines[0] || '').width <= 296) break;
+            size -= 2;
+          }
+          const lh = size * 1.04, y0 = -8 - (lines.length - 1) * lh / 2;
+          ctx.fillStyle = rgb(o.tint, alpha);
+          lines.forEach((ln,i) => ctx.fillText(ln, 0, y0 + i*lh));
+          ctx.font = `800 13px ${UI}`;
+          ctx.fillStyle = rgb(GOLD, alpha * .9);
+          ctx.fillText(o.counter, 0, 77);
+        };
+        if (S.prev && fe < 1) phrase(S.prev, 1 - fe);
+        phrase(S, fe);
+      }
+      ctx.strokeStyle = rgb(GOLD, .6 * kc); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(-29, 56); ctx.lineTo(29, 56); ctx.stroke();
+      if (person.name) {
+        const nameSize = person.name.length > 16 ? 13 : 18;
+        ctx.font = `800 ${nameSize}px ${UI}`;
+        ctx.fillStyle = rgb(mix(GOLD, FLASH, .35), .99 * kc);
+        ctx.fillText(person.name.toUpperCase(), 0, 112, 305);
+      }
+      if (person.age) {
+        ctx.font = `700 12px ${UI}`; ctx.fillStyle = rgb(GOLD, .8 * kc);
+        ctx.fillText(`TURNING ${person.age}`, 0, 138);
+      }
     }
-    ctx.strokeStyle = rgb(GOLD, .5 * kc); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-26, 52); ctx.lineTo(26, 52); ctx.stroke();
-    if (person.name) { ctx.font = `800 ${view.s < .8 ? 12 : 10}px ${UI}`; ctx.fillStyle = rgb(mix(GOLD, FLASH, .35), .98 * kc); ctx.fillText(spaced(person.name), 0, 96); }
-    if (person.age) { ctx.font = `700 ${view.s < .8 ? 10 : 9}px ${UI}`; ctx.fillStyle = rgb(GOLD, .76 * kc); ctx.fillText(`T U R N I N G   ${[...String(person.age)].join(' ')}`, 0, 113); }
     // progress arc and its glowing head
     if (S.arc > .001) {
       const end = -Math.PI / 2 + TAU * Math.min(S.arc, .9999);
@@ -513,6 +582,7 @@ html.gift-view .wish-open.show { display: inline-flex; align-items: center; just
   function syncPerson() {
     person = { name: nameIn.value.trim(), age: ageIn.value ? clamp(parseInt(ageIn.value, 10) || 0, 0, 150) || null : null };
     if (S.kind === 'greeting') showGreeting();
+    else { $('mobileName').textContent = person.name.toUpperCase(); $('mobileName').classList.toggle('compact', person.name.length > 15); $('mobileAge').textContent = person.age ? `TURNING ${person.age}` : ''; }
   }
   nameIn.addEventListener('input', syncPerson);
   ageIn.addEventListener('input', syncPerson);
@@ -710,8 +780,8 @@ html.gift-view .wish-open.show { display: inline-flex; align-items: center; just
   ]);
   fontsReady.then(() => {
     fitFont();
-    // Open on a scene that already has wishes on it; replay starts from empty.
-    reset(calm ? n * REVEAL + GREET + 5 : 150);
+    // Start at the beginning so the recipient sees each wish in order.
+    reset(0);
     requestAnimationFrame(loop);
   });
 })();

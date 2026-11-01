@@ -159,7 +159,7 @@ html.gift-view .wish-open.show:not([hidden]) { display: inline-flex; opacity: 1;
   <div class="hint">Tap or click anywhere for fireworks</div>
   <div class="mobile-readout" id="mobileReadout" aria-label="The current birthday wish">
     <div class="mobile-kicker">A HUNDRED WISHES<br>FOR YOUR BRIGHTEST YEAR YET</div>
-    <div class="mobile-phrase" id="mobilePhrase">Happy Birthday!</div>
+    <div class="mobile-phrase" id="mobilePhrase" aria-live="polite" aria-atomic="true">Happy Birthday!</div>
     <div class="mobile-counter" id="mobileCounter"></div>
     <div class="mobile-name" id="mobileName"></div>
     <div class="mobile-age" id="mobileAge"></div>
@@ -225,7 +225,7 @@ html.gift-view .wish-open.show:not([hidden]) { display: inline-flex; opacity: 1;
   // ---------- configuration (frame units match the 16 ms tick of the Python original) ----------
   const TAU = Math.PI * 2, BOX = 800, STEP_MS = 16;
   const R_INNER = 182, R_OUTER = 342, R_RING = 366, SLIDE = 18, FADE = 40;
-  const REVEAL = 42, GREET = 82, IDLE_AFTER = 165, IDLE_EVERY = 340;
+  const REVEAL = 44, GREET = 82, IDLE_AFTER = 165, IDLE_EVERY = 340;
   const SPIN = 0.0006, BOOST = 0.0006, SWEEP_SPEED = 0.22, SWEEP_W = 3.0;
   const MAX_SPARKS = 600, MAX_BALLOONS = 6, CONFETTI_N = 70, BOKEH_N = 14, STAR_N = 140;
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -271,22 +271,15 @@ html.gift-view .wish-open.show:not([hidden]) { display: inline-flex; opacity: 1;
   let rng = Math.random, S, spokes, bokeh, stars, confetti, balloons, sparks, rockets, meteor, shock, fontPx = 10;
 
   function fitFont() {
-    // Mobile: larger lettering, shorter rim labels; the full message stays in the center.
-    // Displaying all 100 full sentences at this size is geometrically impossible.
-    if (window.innerWidth <= 620) { fontPx = 17; return; }
-    for (fontPx = 14; fontPx > 10; fontPx--) {
-      ctx.font = `500 ${fontPx}px ${UI}`;
-      if (Math.max(...wishes.map((w) => ctx.measureText(w).width)) <= R_OUTER - R_INNER) return;
+    // Same complete radial sentences as the original, not abbreviated or grouped.
+    // The lettering is slightly larger than the original's minimum where geometry allows.
+    const maxW = R_OUTER - R_INNER - 6;
+    const minimum = window.innerWidth <= 620 ? 11 : 10;
+    for (fontPx = 14; fontPx >= minimum; fontPx--) {
+      ctx.font = `600 ${fontPx}px ${UI}`;
+      if (Math.max(...wishes.map((w) => ctx.measureText(w).width)) <= maxW) return;
     }
-  }
-  function rimLabel(text) {
-    if (window.innerWidth > 620) return text;
-    const max = R_OUTER - R_INNER - 6;
-    ctx.font = `700 ${fontPx}px ${UI}`;
-    if (ctx.measureText(text).width <= max) return text;
-    let shortened = text;
-    while (shortened.length > 4 && ctx.measureText(shortened + '…').width > max) shortened = shortened.slice(0,-1);
-    return shortened.trimEnd() + '…';
+    fontPx = minimum;
   }
 
   function reset(preroll = 0) {
@@ -343,7 +336,7 @@ html.gift-view .wish-open.show:not([hidden]) { display: inline-flex; opacity: 1;
   // ---------- simulation ----------
   function revealNext() {
     spokes[S.shown].born = S.frame;
-    showWish(S.shown, 12); // Every wish appears in order, once per 42 frames (~0.67s).
+    showWish(S.shown, 12); // Exactly one new spoke and one new centre wish per 44 frames (~0.70s).
     S.shown++;
     if (S.shown === n) {
       S.doneAt = S.frame;
@@ -459,15 +452,12 @@ html.gift-view .wish-open.show:not([hidden]) { display: inline-flex; opacity: 1;
       ctx.beginPath(); ctx.moveTo(sx - 3, b.y + 24); ctx.lineTo(sx + 3, b.y + 24); ctx.lineTo(sx, b.y + 18); ctx.fillStyle = rgb(b.color, .78); ctx.fill();
       ctx.beginPath(); ctx.ellipse(sx - 6, b.y - 8, 3, 5, -.5, 0, TAU); ctx.fillStyle = rgb(FLASH, .55); ctx.fill();
     }
-    // spokes: keep all 100 wishes. On small screens, cycle through 3 interleaved
-    // readable sets instead of piling 100 microscopic overlapping lines together.
-    const mobileWheel = window.innerWidth <= 620;
-    const displayPhase = Math.floor(f / 205) % 3;
-    ctx.font = `${mobileWheel ? 700 : 500} ${fontPx}px ${UI}`;
+    // ORIGINAL BEHAVIOR: every wish stays in the circle once it is revealed.
+    // Never filter by modulo, hide in groups, truncate, or skip a spoke on mobile.
+    ctx.font = `600 ${fontPx}px ${UI}`;
     const finished = S.doneAt !== null, sweep = calm ? 0 : (f * SWEEP_SPEED) % n;
     for (let i = 0; i < n; i++) {
       const sp = spokes[i]; if (sp.born === null) continue;
-      if (mobileWheel && i !== S.cur && i % 3 !== displayPhase) continue;
       const u = clamp((f - sp.born) / FADE), e = 1 - Math.pow(1 - u, 3);
       const a = (((sp.angle + S.rot) % TAU) + TAU) % TAU, r = R_INNER + (1 - e) * SLIDE;
       let glow = 0;
@@ -478,7 +468,7 @@ html.gift-view .wish-open.show:not([hidden]) { display: inline-flex; opacity: 1;
       ctx.fillStyle = rgb(mix(sp.color, FLASH, fl), base + (1 - base) * fl);
       const left = a > Math.PI / 2 && a < 3 * Math.PI / 2;
       ctx.save(); ctx.translate(r * Math.cos(a), -r * Math.sin(a)); ctx.rotate(left ? Math.PI - a : -a);
-      ctx.textAlign = left ? 'right' : 'left'; ctx.fillText(mobileWheel ? rimLabel(sp.text) : sp.text, 0, 0); ctx.restore();
+      ctx.textAlign = left ? 'right' : 'left'; ctx.fillText(sp.text, 0, 0, R_OUTER - R_INNER - 7); ctx.restore();
     }
     // centre: Canvas on desktop. On phones the same current message is shown
     // by ONE larger HTML layer at precisely the wheel center (never below it).
@@ -780,7 +770,7 @@ html.gift-view .wish-open.show:not([hidden]) { display: inline-flex; opacity: 1;
   ]);
   fontsReady.then(() => {
     fitFont();
-    // Start at the beginning so the recipient sees each wish in order.
+    // No preroll: the recipient sees wishes 001 through 100, in exact order.
     reset(0);
     requestAnimationFrame(loop);
   });

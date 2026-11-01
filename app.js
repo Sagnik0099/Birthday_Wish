@@ -6,7 +6,7 @@
   // ---------- configuration (frame units match the 16 ms tick of the Python original) ----------
   const TAU = Math.PI * 2, BOX = 800, STEP_MS = 16;
   const R_INNER = 187, R_OUTER = 342, R_RING = 366, SLIDE = 11, FADE = 34;
-  const REVEAL = 44, GREET = 82, IDLE_AFTER = 165, IDLE_EVERY = 340;
+  const REVEAL = 52, GREET = 82, IDLE_AFTER = 165, IDLE_EVERY = 340;
   const SPIN = 0.0006, BOOST = 0.0006, SWEEP_SPEED = 0.22, SWEEP_W = 3.0;
   const MAX_SPARKS = 600, MAX_BALLOONS = 6, CONFETTI_N = 70, BOKEH_N = 14, STAR_N = 140;
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -38,11 +38,6 @@
     view.s = Math.min(r.width, Math.max(300, r.height - giftBottomRoom)) / BOX;
     view.hw = r.width / 2 / view.s;
     view.hh = r.height / 2 / view.s;
-    // Anchor the delayed button underneath the wheel rather than to the viewport edge.
-    // Reserve extra space on wide screens where the ring would otherwise reach the bottom.
-    const buttonTop = Math.min(r.height - 84, r.height / 2 + R_RING * view.s + 27);
-    const wishButton = $('openWish');
-    if (wishButton) { wishButton.style.top = `${buttonTop}px`; wishButton.style.bottom = 'auto'; }
     if (wishes && wishes.length) fitFont();
   }
 
@@ -70,8 +65,13 @@
     n = wishes.length;
     S = { frame: 0, rot: 0, shown: 0, cur: null, curSince: 0, kind: 'wish', prev: null, fadeLen: 14, tint: CREAM, text: '', counter: '',
           doneAt: null, greeted: false, nextLaunch: 0, arc: 0, paused: S ? S.paused : false, wishPromptShown: false };
-    $('openWish').hidden = true;
-    $('openWish').classList.remove('show');
+    const finaleSection = $('finaleSection');
+    finaleSection.hidden = true;
+    finaleSection.classList.remove('show');
+    $('memoryStatus').textContent = '';
+    $('openWish').hidden = Boolean(window.__BIRTHDAY_KEEPSAKE__);
+    $('saveMemory').hidden = Boolean(window.__BIRTHDAY_KEEPSAKE__);
+    $('replayMemory').hidden = !window.__BIRTHDAY_KEEPSAKE__;
     spokes = wishes.map((text, i) => ({ text, angle: Math.PI / 2 - TAU * i / n, color: palette(i / Math.max(1, n - 1)), born: null }));
     const R = (a, b) => a + (b - a) * rng();
     bokeh = Array.from({ length: BOKEH_N }, () => ({ x: R(-560, 560), y: R(-560, 560), r: R(26, 70), vx: R(-.12, .12), vy: R(-.18, -.04), phase: R(0, TAU), hue: rng() }));
@@ -98,7 +98,7 @@
     $('mobileAge').textContent = person.age ? `TURNING ${person.age}` : '';
   }
   const showWish = (i, len = 14) => setCentre(wishes[i], `N° ${String(i + 1).padStart(3, '0')}`, i, mix(CREAM, spokes[i].color, .18), 'wish', len);
-  const greeting = () => person.name ? `Happy Birthday,\n${person.name}!` : 'Happy Birthday!';
+  const greeting = () => 'Happy Birthday!'; // Name already appears separately, so it is never duplicated.
   const showGreeting = () => setCentre(greeting(), `${n} / ${n}`, n - 1, mix(GOLD, FLASH, .5), 'greeting');
 
   // ---------- fireworks ----------
@@ -122,7 +122,7 @@
   // ---------- simulation ----------
   function revealNext() {
     spokes[S.shown].born = S.frame;
-    showWish(S.shown, 12); // Exactly one new spoke and one new centre wish per 44 frames (~0.70s).
+    showWish(S.shown, 14); // One spoke and one centre wish every 52 frames (~0.83s).
     S.shown++;
     if (S.shown === n) {
       S.doneAt = S.frame;
@@ -146,10 +146,17 @@
         showWish(k);
       }
       if (!S.wishPromptShown && document.documentElement.classList.contains('gift-view') && since >= IDLE_AFTER) {
-        const wishBtn = $('openWish');
-        wishBtn.hidden = false;
-        requestAnimationFrame(() => wishBtn.classList.add('show'));
+        const finale = $('finaleSection');
+        finale.hidden = false;
+        if (window.__BIRTHDAY_KEEPSAKE__) $('openWish').hidden = true;
+        requestAnimationFrame(() => finale.classList.add('show'));
         S.wishPromptShown = true;
+        // Gently bring the message into view without covering or interrupting the wheel.
+        if (!window.__BIRTHDAY_KEEPSAKE__ || !calm) {
+          setTimeout(() => {
+            if (!finale.hidden && !S.paused) finale.scrollIntoView({behavior: calm ? 'auto' : 'smooth', block: 'end'});
+          }, 850);
+        }
       }
       if (!calm) {
         if (--S.nextLaunch <= 0) { const c = rng() < .35 ? 2 : 1; for (let i = 0; i < c; i++) launch(); S.nextLaunch = 30 + Math.floor(rng() * 41); }
@@ -264,9 +271,9 @@
       const kc = clamp((f - 8) / 40);
       ctx.textAlign = 'center';
       ctx.font = `800 13px ${UI}`; ctx.fillStyle = rgb(GOLD, .94 * kc);
-      ctx.fillText('A   H U N D R E D   W I S H E S', 0, -101);
+      ctx.fillText('A   H U N D R E D   W I S H E S', 0, -116);
       ctx.font = `800 12px ${UI}`;
-      ctx.fillText('F O R   Y O U R   B R I G H T E S T   Y E A R   Y E T', 0, -82);
+      ctx.fillText('F O R   Y O U R   B R I G H T E S T   Y E A R   Y E T', 0, -97);
       if (S.cur !== null) {
         const fe = clamp((f - S.curSince) / S.fadeLen);
         const phrase = (o, alpha) => {
@@ -278,12 +285,12 @@
             if (lines.length <= 3 && ctx.measureText(lines[0] || '').width <= 296) break;
             size -= 2;
           }
-          const lh = size * 1.04, y0 = -8 - (lines.length - 1) * lh / 2;
+          const lh = size * 1.05, y0 = -15 - (lines.length - 1) * lh / 2;
           ctx.fillStyle = rgb(o.tint, alpha);
           lines.forEach((ln,i) => ctx.fillText(ln, 0, y0 + i*lh));
           ctx.font = `800 13px ${UI}`;
           ctx.fillStyle = rgb(GOLD, alpha * .9);
-          ctx.fillText(o.counter, 0, 77);
+          ctx.fillText(o.counter, 0, 76);
         };
         if (S.prev && fe < 1) phrase(S.prev, 1 - fe);
         phrase(S, fe);
@@ -294,11 +301,11 @@
         const nameSize = person.name.length > 16 ? 13 : 18;
         ctx.font = `italic 400 ${person.name.length > 16 ? 23 : 31}px ${SERIF}`;
         ctx.fillStyle = rgb(mix(GOLD, FLASH, .35), .99 * kc);
-        ctx.fillText(person.name, 0, 117, 295);
+        ctx.fillText(person.name, 0, 126, 295);
       }
       if (person.age) {
         ctx.font = `700 12px ${UI}`; ctx.fillStyle = rgb(GOLD, .8 * kc);
-        ctx.fillText(`TURNING ${person.age}`, 0, 138);
+        ctx.fillText(`TURNING ${person.age}`, 0, 153);
       }
     }
     // progress arc and its glowing head
@@ -428,7 +435,7 @@
     if (/^[A-Za-z0-9-]{1,28}$/.test(h)) { nameIn.value = h.replace(/-/g, ' '); syncPerson(); }
   }
   function readSharedLink() {
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(window.__BIRTHDAY_KEEPSAKE__ || location.search);
     const sharedWishes = params.get('wishes');
     if (sharedWishes !== null && sharedWishes.length <= 30000) {
       const list = sharedWishes.split('\n').map((line) => line.trim()).filter(Boolean);
@@ -551,54 +558,43 @@
   });
 
 
-  // ---------- optional friend note, readable again after the opening ----------
+  // ---------- sender note: visible only at the finale, never at the opening ----------
   function updateNote() {
     senderNote = $('senderNoteInput').value.trim().slice(0, 360);
-    $('openingMessage').textContent = senderNote;
-    $('openingMessage').hidden = !senderNote;
-    $('noteBody').textContent = senderNote;
-    const present = Boolean(senderNote) && document.documentElement.classList.contains('gift-view');
-    $('openNote').hidden = !present;
+    $('finaleMessage').textContent = senderNote;
+    $('finaleNote').hidden = !senderNote;
   }
   $('senderNoteInput').addEventListener('input', updateNote);
-  const noteModal = $('noteModal');
-  let noteReturnFocus = null;
-  $('openNote').addEventListener('click', () => {
-    noteReturnFocus = document.activeElement;
-    noteModal.hidden = false; $('closeNote').focus();
-  });
-  function closeNoteDialog() {
-    noteModal.hidden = true;
-    if (noteReturnFocus && typeof noteReturnFocus.focus === 'function') noteReturnFocus.focus();
-  }
-  $('closeNote').addEventListener('click', closeNoteDialog);
-  noteModal.addEventListener('click', e => { if (e.target === noteModal) closeNoteDialog(); });
-  addEventListener('keydown', e => { if (e.key === 'Escape' && !noteModal.hidden) closeNoteDialog(); });
-  // ---------- music: explicit user gesture required by most mobile browsers ----------
+
+  // ---------- music: attempt autoplay at the start of the wheel ----------
+  // Mobile Chrome/Safari often blocks audible autoplay without a user gesture.
+  // We never interrupt the automatic opening; the tiny on-wheel control is the fallback.
   const birthdayAudio = $('birthdayAudio');
   const musicToggle = $('musicToggle');
-  const openingMusic = $('openingMusic');
   birthdayAudio.volume = .48;
   function syncMusicUI() {
     const playing = !birthdayAudio.paused;
     musicToggle.textContent = playing ? '♫ Pause music' : '♫ Play music';
     musicToggle.setAttribute('aria-pressed', String(playing));
-    openingMusic.textContent = playing ? '♫ Music is playing' : '♫ Start the birthday tune';
+  }
+  async function startWheelMusic() {
+    try {
+      await birthdayAudio.play();
+      syncMusicUI();
+    } catch (error) {
+      musicToggle.textContent = '♫ Tap for music';
+      musicToggle.setAttribute('aria-pressed', 'false');
+    }
   }
   async function toggleMusic() {
     if (!birthdayAudio.paused) { birthdayAudio.pause(); syncMusicUI(); return; }
-    try { await birthdayAudio.play(); }
-    catch { musicToggle.textContent = '♫ Tap to play music'; }
-    syncMusicUI();
+    await startWheelMusic();
   }
   musicToggle.addEventListener('click', toggleMusic);
-  openingMusic.addEventListener('click', toggleMusic);
   birthdayAudio.addEventListener('play', syncMusicUI);
   birthdayAudio.addEventListener('pause', syncMusicUI);
-  birthdayAudio.addEventListener('error', () => {
-    openingMusic.textContent = 'Music file not found';
-    musicToggle.textContent = 'Music unavailable';
-  });
+  birthdayAudio.addEventListener('error', () => { musicToggle.textContent = 'Music unavailable'; });
+
   // ---------- automatic clock-to-wheel cinematic transition ----------
   const opening = $('opening');
   let openingTimer = null;
@@ -610,19 +606,77 @@
     document.documentElement.classList.remove('intro-pending');
     // Let the opening dissolve fully, then begin wish #001; none are missed behind the transition.
     const ms = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 200 : 1550;
-    setTimeout(() => { opening.hidden = true; introActive = false; reset(0); acc = 0; last = 0; }, ms);
+    setTimeout(() => { opening.hidden = true; introActive = false; reset(0); acc = 0; last = 0; startWheelMusic(); }, ms);
   }
-  $('skipOpening').addEventListener('click', finishOpening);
   function beginOpening() {
     if (!introActive) return;
     opening.hidden = false;
     $('openingSubtitle').textContent = person.name
       ? `A special day for ${person.name}.` : 'And today is one of them.';
-    openingTimer = setTimeout(finishOpening, senderNote ? 10500 : 7300);
+    openingTimer = setTimeout(finishOpening, 7300);
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       clearTimeout(openingTimer); openingTimer = setTimeout(finishOpening, 1200);
     }
   }
+
+  $('replayMemory').addEventListener('click', () => location.reload());
+
+  // ---------- save the whole interactive birthday as one personal HTML keepsake ----------
+  function keepsakeParameters() {
+    const params = new URLSearchParams();
+    if (person.name) params.set('name', person.name);
+    if (person.age) params.set('age', String(person.age));
+    if (senderNote) params.set('note', senderNote);
+    if (wishes.length !== DEFAULT_WISHES.length || wishes.some((wish, i) => wish !== DEFAULT_WISHES[i])) {
+      params.set('wishes', wishes.join('\n'));
+    }
+    params.set('gift', '1');
+    return params.toString();
+  }
+  function asDataURL(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Could not include the music file.'));
+      reader.readAsDataURL(blob);
+    });
+  }
+  $('saveMemory').addEventListener('click', async () => {
+    const button = $('saveMemory');
+    const status = $('memoryStatus');
+    button.disabled = true;
+    button.textContent = 'Preparing your memory…';
+    status.textContent = '';
+    try {
+      const base = document.baseURI;
+      const [htmlRes, cssRes, jsRes, audioRes] = await Promise.all(
+        ['index.html', 'style.css', 'app.js', 'birthday-tune.mp3'].map(path => fetch(new URL(path, base)))
+      );
+      if (![htmlRes, cssRes, jsRes, audioRes].every(r => r.ok)) throw new Error('Some files could not be loaded. Please reopen the published GitHub Pages site.');
+      let [html, styles, script] = await Promise.all([htmlRes.text(), cssRes.text(), jsRes.text()]);
+      const musicURL = await asDataURL(await audioRes.blob());
+      html = html.replace('birthday-tune.mp3', musicURL);
+      const state = JSON.stringify(keepsakeParameters()).replace(/</g, '\\u003c');
+      html = html.replace('<!doctype html>', '<!doctype html><script>window.__BIRTHDAY_KEEPSAKE__ = ' + state + ';<\/script>');
+      html = html.replace('<link rel="stylesheet" href="style.css">', '<style>' + styles.replace(/<\/style/gi, '<\\/style') + '</style>');
+      html = html.replace('<script defer src="app.js"></script>', '<script>' + script.replace(/<\/script/gi, '<\\/script') + '<\/script>');
+      const file = new Blob([html], {type: 'text/html;charset=utf-8'});
+      const blobUrl = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = 'A_Little_Birthday_Memory' + (person.name ? '_' + person.name.replace(/[^a-z0-9-]/gi, '_').slice(0, 25) : '') + '.html';
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 6000);
+      status.textContent = 'Saved as a single interactive HTML memory, including the birthday tune.';
+    } catch (error) {
+      status.textContent = 'Could not save the memory. ' + error.message;
+    } finally {
+      button.disabled = false;
+      button.textContent = '↓ Save this memory';
+    }
+  });
 
   // ---------- start ----------
   new ResizeObserver(resize).observe(stage);

@@ -231,3 +231,57 @@ html.intro-pending .stage { pointer-events: none; }
   .opening *, .wish-open.show, .mobile-phrase.wish-arrive { animation:none!important; }
   .opening,.stage { transition-duration:.15s!important; }
 }
+
+/* V8: spacious centre layout and a quiet finale after the 100th wish */
+@media (max-width: 620px) {
+  .mobile-readout {
+    width: min(45vw, 220px);
+    height: clamp(140px, 38vw, 176px);
+    min-height: 0; max-height: none;
+    display: grid; grid-template-rows: auto minmax(30px,1fr) auto auto auto;
+    align-content: center; justify-items: center;
+    gap: 1px;
+  }
+  .mobile-kicker { align-self: start; font-size: clamp(7.5px, 2vw, 9.5px); line-height: 1.25; letter-spacing: .045em; }
+  .mobile-phrase { align-self: center; line-height: 1.06; font-size: clamp(18px, 5.45vw, 23px); }
+  .mobile-phrase.compact { font-size: clamp(15.5px, 4.3vw, 20px); }
+  .mobile-counter { align-self: center; font-size: clamp(8px,2.3vw,10px); line-height:1.25; }
+  .mobile-name { align-self: end; font-size: clamp(21px,5.8vw,27px); line-height:1.08; }
+  .mobile-name.compact { font-size: clamp(16px,4.5vw,21px); }
+  .mobile-age { align-self: end; font-size: 9px; }
+}
+.finale-section { background: linear-gradient(180deg,#170b2a 0%, #24102f 100%); color:var(--text);
+  border-top: 1px solid rgba(220,176,102,.14); padding:32px 20px 44px; text-align:center;
+  box-sizing:border-box; }
+.finale-section[hidden] { display:none!important; }
+.finale-inner { max-width:580px; margin:0 auto; opacity:0; transform:translateY(22px); filter:blur(3px);
+  transition:opacity 1.4s ease,transform 1.4s ease,filter 1.4s ease; }
+.finale-section.show .finale-inner { opacity:1; transform:translateY(0);filter:blur(0); }
+.finale-ornament { font:400 17px var(--display); letter-spacing:.48em; color:#e5ba7a; margin-bottom:15px; }
+.finale-note { padding: 0 9px 24px; }
+.finale-note[hidden] { display:none!important; }
+.finale-label { color:#dab77e; font:800 10px/1.4 var(--ui); letter-spacing:.20em; margin-bottom:12px; }
+.finale-note p { font:italic 400 clamp(24px,5vw,34px)/1.25 var(--display); color:#fff1d8;
+  white-space:pre-line; overflow-wrap:anywhere; margin:0; }
+.finale-actions { display:flex; justify-content:center; gap:12px; align-items:center; flex-wrap:wrap; }
+.finale-actions .wish-open, .finale-actions .keepsake-button { display:inline-flex;position:static;transform:none;
+  opacity:1; box-sizing:border-box; min-height:53px; padding:13px 21px;
+  font:700 13px/1.25 var(--ui); letter-spacing:.02em; cursor:pointer; border-radius:999px;
+  transition:border-color .2s, background .2s, box-shadow .2s; white-space:normal; }
+.finale-actions .wish-open { min-width:170px; border:1px solid rgba(238,199,135,.8);
+  color:#fff6e6;background:linear-gradient(145deg,#422657,#201334);box-shadow:0 10px 28px rgba(0,0,0,.22); }
+.finale-actions .keepsake-button { min-width:170px; color:#eed6ad; background:transparent;
+  border:1px solid rgba(238,199,135,.45); }
+.finale-actions button:hover,.finale-actions button:focus-visible { border-color:#ffe4ad;
+  background:rgba(79,47,101,.9);outline-offset:3px; }
+.finale-actions button:disabled { opacity:.65;cursor:wait; }
+.finale-status { color:#bdb0cf; font:500 11px/1.6 var(--ui); margin:11px auto 0; max-width:450px; }
+.finale-status:empty {display:none;}
+@media(max-width:620px) {
+  .finale-section { padding:23px 18px 38px; }
+  .finale-ornament { margin-bottom:11px; }
+  .finale-note { padding-bottom:20px; }
+  .finale-actions { gap:9px; }
+  .finale-actions .wish-open,.finale-actions .keepsake-button { min-width:0; flex:1 1 145px; min-height:52px; padding:12px 14px; font-size:13px; }
+}
+@media(prefers-reduced-motion:reduce) {.finale-inner { transition:none; transform:none; filter:none; }}

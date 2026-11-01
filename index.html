@@ -1,4 +1,15 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<!-- A personalized link is a viewing-only gift; the base URL stays the editor. -->
+<style>html.gift-view .controls { display: none !important; }</style>
+<script>
+  (() => {
+    const params = new URLSearchParams(location.search);
+    // Also recognize personalized links made with the previous version.
+    if (params.get('gift') === '1' || ['name', 'age', 'wishes'].some(key => params.has(key))) {
+      document.documentElement.classList.add('gift-view');
+    }
+  })();
+</script></head><body>
 <title>100 Birthday Wishes</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -435,13 +446,14 @@ summary { cursor: pointer; width: fit-content; }
     }
     const url = new URL(location.href);
     url.hash = '';
-    ['name', 'age', 'wishes'].forEach((key) => url.searchParams.delete(key));
+    ['name', 'age', 'wishes', 'gift'].forEach((key) => url.searchParams.delete(key));
     if (person.name) url.searchParams.set('name', person.name);
     if (person.age) url.searchParams.set('age', String(person.age));
     // Include edited wishes only; the default 100 are already in the page.
     if (wishes.length !== DEFAULT_WISHES.length || wishes.some((wish, i) => wish !== DEFAULT_WISHES[i])) {
       url.searchParams.set('wishes', wishes.join('\n'));
     }
+    url.searchParams.set('gift', '1'); // Open the recipient's page without any editing controls.
     const link = url.toString();
     try {
       await navigator.clipboard.writeText(link);

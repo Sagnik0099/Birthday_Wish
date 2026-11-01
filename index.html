@@ -36,7 +36,16 @@
   <div class="hint">Tap or click anywhere for fireworks</div>
   <button class="music-toggle" id="musicToggle" type="button" aria-pressed="false" title="Play birthday music">♫ Play music</button>
   <div class="mobile-readout" id="mobileReadout" aria-label="The current birthday wish">
-    <div class="mobile-kicker">A HUNDRED WISHES<br>FOR YOUR BRIGHTEST YEAR YET</div>
+    <div class="mobile-kicker" aria-label="A hundred wishes for your brightest year yet">
+      <svg viewBox="0 0 330 92" role="presentation" aria-hidden="true" focusable="false">
+        <defs>
+          <path id="birthdayArcOne" d="M 12 62 Q 165 8 318 62" />
+          <path id="birthdayArcTwo" d="M 20 83 Q 165 38 310 83" />
+        </defs>
+        <text class="arc-main"><textPath href="#birthdayArcOne" startOffset="50%" text-anchor="middle">A HUNDRED WISHES</textPath></text>
+        <text class="arc-sub"><textPath href="#birthdayArcTwo" startOffset="50%" text-anchor="middle">FOR YOUR BRIGHTEST YEAR YET</textPath></text>
+      </svg>
+    </div>
     <div class="mobile-phrase" id="mobilePhrase" aria-live="polite" aria-atomic="true">Happy Birthday!</div>
     <div class="mobile-counter" id="mobileCounter"></div>
     <div class="mobile-name" id="mobileName"></div>
@@ -46,17 +55,21 @@
 
 <section class="finale-section" id="finaleSection" hidden aria-label="Birthday finale">
   <div class="finale-inner">
-    <div class="finale-ornament" aria-hidden="true">✧ ✦ ✧</div>
+    <div class="finale-ornament" aria-hidden="true">✧ &nbsp; ✦ &nbsp; ✧</div>
     <div class="finale-note" id="finaleNote" hidden>
-      <div class="finale-label">A LITTLE NOTE, JUST FOR YOU</div>
+      <div class="finale-label">ONE LAST LITTLE WISH</div>
       <p id="finaleMessage"></p>
     </div>
     <div class="finale-actions">
       <button type="button" class="wish-open" id="openWish">✦ Make a wish</button>
-      <button type="button" class="keepsake-button" id="saveMemory">↓ Save this memory</button>
+      <button type="button" class="keepsake-button" id="saveMemory">✧ Save the birthday video</button>
       <button type="button" class="keepsake-button" id="replayMemory" hidden>↻ Watch again</button>
     </div>
     <div class="finale-status" id="memoryStatus" role="status" aria-live="polite"></div>
+    <div class="recording-progress" id="recordingProgress" hidden>
+      <div class="recording-progress-track"><span id="recordingProgressBar"></span></div>
+      <span id="recordingProgressLabel">Preparing your video…</span>
+    </div>
   </div>
 </section>
 

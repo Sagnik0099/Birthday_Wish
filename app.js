@@ -46,6 +46,7 @@
   let person = { name: '', age: null };
   let introActive = document.documentElement.classList.contains('gift-view');
   let senderNote = '';
+  let videoExportActive = false;
   let rng = Math.random, S, spokes, bokeh, stars, confetti, balloons, sparks, rockets, meteor, shock, fontPx = 10;
 
   function fitFont() {
@@ -69,9 +70,9 @@
     finaleSection.hidden = true;
     finaleSection.classList.remove('show');
     $('memoryStatus').textContent = '';
-    $('openWish').hidden = Boolean(window.__BIRTHDAY_KEEPSAKE__);
-    $('saveMemory').hidden = Boolean(window.__BIRTHDAY_KEEPSAKE__);
-    $('replayMemory').hidden = !window.__BIRTHDAY_KEEPSAKE__;
+    $('openWish').hidden = false;
+    $('saveMemory').hidden = false;
+    $('replayMemory').hidden = true;
     spokes = wishes.map((text, i) => ({ text, angle: Math.PI / 2 - TAU * i / n, color: palette(i / Math.max(1, n - 1)), born: null }));
     const R = (a, b) => a + (b - a) * rng();
     bokeh = Array.from({ length: BOKEH_N }, () => ({ x: R(-560, 560), y: R(-560, 560), r: R(26, 70), vx: R(-.12, .12), vy: R(-.18, -.04), phase: R(0, TAU), hue: rng() }));
@@ -148,13 +149,13 @@
       if (!S.wishPromptShown && document.documentElement.classList.contains('gift-view') && since >= IDLE_AFTER) {
         const finale = $('finaleSection');
         finale.hidden = false;
-        if (window.__BIRTHDAY_KEEPSAKE__) $('openWish').hidden = true;
+
         requestAnimationFrame(() => finale.classList.add('show'));
         S.wishPromptShown = true;
         // Gently bring the message into view without covering or interrupting the wheel.
-        if (!window.__BIRTHDAY_KEEPSAKE__ || !calm) {
+        if (!calm && !videoExportActive) {
           setTimeout(() => {
-            if (!finale.hidden && !S.paused) finale.scrollIntoView({behavior: calm ? 'auto' : 'smooth', block: 'end'});
+            if (!finale.hidden && !S.paused && !videoExportActive) finale.scrollIntoView({behavior: calm ? 'auto' : 'smooth', block: 'nearest'});
           }, 850);
         }
       }
@@ -270,10 +271,21 @@
     if (window.innerWidth > 620) {
       const kc = clamp((f - 8) / 40);
       ctx.textAlign = 'center';
-      ctx.font = `800 13px ${UI}`; ctx.fillStyle = rgb(GOLD, .94 * kc);
-      ctx.fillText('A   H U N D R E D   W I S H E S', 0, -116);
-      ctx.font = `800 12px ${UI}`;
-      ctx.fillText('F O R   Y O U R   B R I G H T E S T   Y E A R   Y E T', 0, -97);
+      // A gentle arc, lowered within the centre so the top no longer feels crowded.
+      function arcHeading(line, y, fontSize, curve) {
+        ctx.font = `800 ${fontSize}px ${UI}`;
+        const chars = Array.from(line), widths = chars.map(ch => ctx.measureText(ch).width);
+        const full = widths.reduce((a,b)=>a+b,0), scale = Math.min(1,294/full);
+        let x = -full*scale/2;
+        for (let i=0;i<chars.length;i++) {
+          const w=widths[i]*scale, mid=x+w/2, t=mid/147;
+          ctx.save(); ctx.translate(mid,y+curve*t*t); ctx.rotate(Math.atan2(2*curve*t,147));
+          ctx.fillText(chars[i],0,0); ctx.restore(); x += w;
+        }
+      }
+      ctx.fillStyle = rgb(GOLD, .94 * kc); ctx.textAlign = 'center';
+      arcHeading('A HUNDRED WISHES', -103, 14, 9);
+      arcHeading('FOR YOUR BRIGHTEST YEAR YET', -84, 10.8, 6);
       if (S.cur !== null) {
         const fe = clamp((f - S.curSince) / S.fadeLen);
         const phrase = (o, alpha) => {
@@ -580,12 +592,25 @@
   async function startWheelMusic() {
     try {
       await birthdayAudio.play();
+      musicToggle.classList.remove('music-blocked');
       syncMusicUI();
     } catch (error) {
-      musicToggle.textContent = '♫ Tap for music';
+      musicToggle.classList.add('music-blocked');
+      musicToggle.textContent = '♪ Tap anywhere for music';
       musicToggle.setAttribute('aria-pressed', 'false');
     }
   }
+  // Browsers refuse audible autoplay without a gesture. A tap anywhere, including
+  // fireworks or the opening, resumes music without forcing an extra dialog.
+  function unlockBirthdayAudio(event) {
+    if (birthdayAudio.paused && !introActive && !videoExportActive && event.target !== musicToggle && !event.target.closest('button, input, textarea, summary')) {
+      startWheelMusic();
+    }
+  }
+  document.addEventListener('pointerdown', unlockBirthdayAudio, {passive:true});
+  document.addEventListener('keydown', event => {
+    if ((event.key === 'Enter' || event.key === ' ') && birthdayAudio.paused && !introActive && !videoExportActive) startWheelMusic();
+  });
   async function toggleMusic() {
     if (!birthdayAudio.paused) { birthdayAudio.pause(); syncMusicUI(); return; }
     await startWheelMusic();
@@ -621,62 +646,229 @@
 
   $('replayMemory').addEventListener('click', () => location.reload());
 
-  // ---------- save the whole interactive birthday as one personal HTML keepsake ----------
-  function keepsakeParameters() {
-    const params = new URLSearchParams();
-    if (person.name) params.set('name', person.name);
-    if (person.age) params.set('age', String(person.age));
-    if (senderNote) params.set('note', senderNote);
-    if (wishes.length !== DEFAULT_WISHES.length || wishes.some((wish, i) => wish !== DEFAULT_WISHES[i])) {
-      params.set('wishes', wishes.join('\n'));
+  // ---------- Video keepsake, not HTML: MP4 when supported, WebM otherwise ----------
+  // MP3 is audio-only and cannot preserve an animated birthday wheel.
+  let videoRaf = 0, recorder = null, recorderChunks = [];
+  let soundtrackContext = null, soundtrackSource = null, soundtrackGain = null;
+  const progressRoot = $('recordingProgress');
+  const progressBar = $('recordingProgressBar');
+  const progressLabel = $('recordingProgressLabel');
+  const INTRO_VIDEO_MS = 3600;
+  const VIDEO_TAIL_MS = 6700;
+  const recordButton = $('saveMemory');
+  const recSky = (rctx, w, h) => {
+    const g = rctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,'#0b0820'); g.addColorStop(.62,'#180c2c'); g.addColorStop(1,'#43163e');
+    rctx.fillStyle = g; rctx.fillRect(0,0,w,h);
+    // Fixed, delicate stars, so the keepsake has the same night-sky feeling.
+    for(let j=0;j<76;j++) {
+      const x = (((j*97.39+37)%719)/719)*w;
+      const y = (((j*181.17+53)%1279)/1279)*h;
+      rctx.beginPath();rctx.arc(x,y,j%11===0?1.9:.9,0,TAU);
+      rctx.fillStyle='rgba(250,218,185,.30)';rctx.fill();
     }
-    params.set('gift', '1');
-    return params.toString();
+  };
+  function videoText(rctx,text,x,y,font,maxWidth=650,fill='#fff3e2') {
+    rctx.save();rctx.font=font;rctx.textAlign='center';rctx.textBaseline='middle';rctx.fillStyle=fill;
+    rctx.shadowColor='rgba(13,7,29,.88)';rctx.shadowBlur=12;
+    rctx.fillText(text,x,y,maxWidth);rctx.restore();
   }
-  function asDataURL(blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error('Could not include the music file.'));
-      reader.readAsDataURL(blob);
-    });
+  function videoWrap(rctx, text, maxWidth) {
+    const lines=[];for(const para of text.split('\n')) {
+      let line='';for (const word of para.split(/\s+/).filter(Boolean)) {
+        const next=line?line+' '+word:word;
+        if(line && rctx.measureText(next).width>maxWidth) {lines.push(line);line=word;}else line=next;
+      } lines.push(line);
+    }return lines;
   }
-  $('saveMemory').addEventListener('click', async () => {
-    const button = $('saveMemory');
-    const status = $('memoryStatus');
-    button.disabled = true;
-    button.textContent = 'Preparing your memory…';
-    status.textContent = '';
+  function drawVideoIntro(rc,elapsed) {
+    recSky(rc,720,1280);
+    const t=elapsed/1000;
+    const ringY=540,radius=171;
+    const h=rc.createRadialGradient(360,ringY,40,360,ringY,260);
+    h.addColorStop(0,'rgba(105,51,114,.3)');h.addColorStop(1,'rgba(30,11,60,0)');
+    rc.fillStyle=h;rc.fillRect(90,260,540,540);
+    rc.strokeStyle='rgba(232,189,127,.75)';rc.lineWidth=2;
+    rc.beginPath();rc.arc(360,ringY,radius,0,TAU);rc.stroke();
+    rc.strokeStyle='rgba(232,189,127,.17)';rc.lineWidth=1;
+    rc.beginPath();rc.arc(360,ringY,radius-21,0,TAU);rc.stroke();
+    videoText(rc,'A LITTLE BIRTHDAY SURPRISE',360,256,`800 18px ${UI}`,630,'#edc791');
+    for(let v=1;v<=12;v++){
+      const angle=v*TAU/12-Math.PI/2;
+      videoText(rc,String(v),360+Math.cos(angle)*137,ringY+Math.sin(angle)*137,`400 27px ${SERIF}`,55,'#e8c491');
+    }
+    function hand(angle,length,width,color){
+      rc.strokeStyle=color;rc.lineWidth=width;rc.lineCap='round';
+      rc.beginPath();rc.moveTo(360,ringY);rc.lineTo(360+length*Math.sin(angle),ringY-length*Math.cos(angle));rc.stroke();
+    }
+    hand(t*.2+.6,85,6,'#e8c491'); hand(t*.6+2,121,3,'#fff4d8');hand(t*2.1,139,1.5,'#fa8bbb');
+    rc.beginPath();rc.arc(360,ringY,7,0,TAU);rc.fillStyle='#ffebcc';rc.fill();
+    videoText(rc,'Some moments deserve',360,827,`400 47px ${SERIF}`);
+    videoText(rc,'a little magic.',360,886,`italic 400 54px ${SERIF}`,620,'#e9c58e');
+    videoText(rc,person.name?`A special day for ${person.name}.`:'And today is one of them.',360,959,`600 21px ${UI}`,630,'#ddc6d5');
+  }
+  function renderVideoFrame(rc,elapsed,videoStarted) {
+    recSky(rc,720,1280);
+    if(!videoStarted) {drawVideoIntro(rc,elapsed);return;}
+    // The actual animation canvas is captured; all 100 spokes stay in its wheel.
+    const side=Math.min(cv.width,cv.height);
+    const x=(cv.width-side)/2, y=(cv.height-side)/2;
+    rc.drawImage(cv,x,y,side,side,0,240,720,720);
+    const over=rc.createLinearGradient(0,930,0,1040);
+    over.addColorStop(0,'rgba(45,16,52,0)');over.addColorStop(1,'#34133b');
+    rc.fillStyle=over;rc.fillRect(0,930,720,110);
+    if(window.innerWidth<=620) {
+      // On mobile the accessible centre text is a DOM overlay. Draw that text
+      // into the recording too; recording a canvas alone would omit it.
+      videoText(rc,'A HUNDRED WISHES',360,528,`800 18px ${UI}`,360,'#efc791');
+      videoText(rc,'FOR YOUR BRIGHTEST YEAR YET',360,553,`800 12px ${UI}`,370,'#efc791');
+      rc.save();rc.font=`italic 400 42px ${SERIF}`;
+      const phraseLines=videoWrap(rc,S.text||'Happy Birthday!',310).slice(0,3);
+      rc.restore();
+      let sz=phraseLines.length>2?30:42;
+      phraseLines.forEach((line,i)=>videoText(rc,line,360,622-(phraseLines.length-1)*sz*.55+i*sz*1.1,`italic 400 ${sz}px ${SERIF}`,330,'#fff1df'));
+      videoText(rc,S.counter||'',360,687,`800 18px ${UI}`,270,'#e5ba7a');
+      if(person.name) videoText(rc,person.name,360,730,`italic 400 41px ${SERIF}`,330,'#ffe4b5');
+      if(person.age) videoText(rc,`TURNING ${person.age}`,360,764,`700 16px ${UI}`,290,'#e5ba7a');
+    }
+    videoText(rc,'A BIRTHDAY FULL OF LITTLE WISHES',360,175,`800 18px ${UI}`,650,'#e9c591');
+    const finish=S.doneAt!==null && S.frame-S.doneAt >= IDLE_AFTER;
+    if(finish) {
+      videoText(rc,'✦   ONE LAST LITTLE WISH   ✦',360,1014,`800 18px ${UI}`,660,'#e9c591');
+      if(senderNote) {
+        let size=32, lines;
+        do {rc.font=`italic 400 ${size}px ${SERIF}`;lines=videoWrap(rc,senderNote,608); if(lines.length*size*1.15<=198)break;size-=2;} while(size>15);
+        const lh=size*1.16;
+        const y0=1115-(lines.length-1)*lh/2;
+        lines.forEach((line,i)=>videoText(rc,line,360,y0+i*lh,`italic 400 ${size}px ${SERIF}`,610,'#fff0dd'));
+      } else videoText(rc,'Hope this year brings you all the good things.',360,1114,`italic 400 31px ${SERIF}`,615,'#fff0dd');
+    } else {
+      const count=String(Math.min(n,S.shown)).padStart(3,'0');
+      videoText(rc,`${count} / ${n} LITTLE WISHES`,360,1090,`800 20px ${UI}`,570,'#edc591');
+    }
+  }
+  function supportedVideoType() {
+    if(!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) return null;
+    const options=[
+      'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/mp4',
+      'video/webm'
+    ];
+    return options.find(t=>MediaRecorder.isTypeSupported(t)) || null;
+  }
+  async function initRecordingAudio() {
+    const AudioCtor=window.AudioContext||window.webkitAudioContext;
+    if(!AudioCtor) return null;
+    if(!soundtrackContext) {
+      soundtrackContext=new AudioCtor();
+      soundtrackSource=soundtrackContext.createMediaElementSource(birthdayAudio);
+      soundtrackGain=soundtrackContext.createGain();
+      soundtrackSource.connect(soundtrackGain);
+      soundtrackGain.connect(soundtrackContext.destination);
+    }
+    const destination=soundtrackContext.createMediaStreamDestination();
+    soundtrackGain.connect(destination);
+    soundtrackGain.gain.value=0; // Music begins alongside the wheel, not during the clock intro.
+    await soundtrackContext.resume();
+    return destination;
+  }
+  recordButton.addEventListener('click', async () => {
+    if(videoExportActive)return;
+    const status=$('memoryStatus');
+    const type=supportedVideoType();
+    if(!type) {
+      status.textContent='This browser cannot record the animation directly. Try Chrome on desktop or your phone’s screen recorder (with device audio).';
+      return;
+    }
+    videoExportActive=true;
+    recordButton.disabled=true;
+    recordButton.textContent='✧ Recording your memory…';
+    progressRoot.hidden=false;
+    progressBar.style.width='0%';
+    status.textContent='Recording the complete birthday. Keep this tab open and your screen awake until the video is saved.';
+    const output=document.createElement('canvas');output.width=720;output.height=1280;
+    const rctx=output.getContext('2d',{alpha:false});
+    const videoStream=output.captureStream(30);
+    let audioStream=null;
+    let startTime=0,videoStarted=false,previouslyPaused=S.paused;
     try {
-      const base = document.baseURI;
-      const [htmlRes, cssRes, jsRes, audioRes] = await Promise.all(
-        ['index.html', 'style.css', 'app.js', 'birthday-tune.mp3'].map(path => fetch(new URL(path, base)))
-      );
-      if (![htmlRes, cssRes, jsRes, audioRes].every(r => r.ok)) throw new Error('Some files could not be loaded. Please reopen the published GitHub Pages site.');
-      let [html, styles, script] = await Promise.all([htmlRes.text(), cssRes.text(), jsRes.text()]);
-      const musicURL = await asDataURL(await audioRes.blob());
-      html = html.replace('birthday-tune.mp3', musicURL);
-      const state = JSON.stringify(keepsakeParameters()).replace(/</g, '\\u003c');
-      html = html.replace('<!doctype html>', '<!doctype html><script>window.__BIRTHDAY_KEEPSAKE__ = ' + state + ';<\/script>');
-      html = html.replace('<link rel="stylesheet" href="style.css">', '<style>' + styles.replace(/<\/style/gi, '<\\/style') + '</style>');
-      html = html.replace('<script defer src="app.js"></script>', '<script>' + script.replace(/<\/script/gi, '<\\/script') + '<\/script>');
-      const file = new Blob([html], {type: 'text/html;charset=utf-8'});
-      const blobUrl = URL.createObjectURL(file);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = 'A_Little_Birthday_Memory' + (person.name ? '_' + person.name.replace(/[^a-z0-9-]/gi, '_').slice(0, 25) : '') + '.html';
-      document.body.append(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 6000);
-      status.textContent = 'Saved as a single interactive HTML memory, including the birthday tune.';
-    } catch (error) {
-      status.textContent = 'Could not save the memory. ' + error.message;
-    } finally {
-      button.disabled = false;
-      button.textContent = '↓ Save this memory';
+      try {
+        audioStream=await initRecordingAudio();
+        if(audioStream) audioStream.stream.getAudioTracks().forEach(t=>videoStream.addTrack(t));
+      } catch(e) { status.textContent='Audio capture is unavailable on this browser; recording the video without embedded music.'; }
+      recorderChunks=[];
+      recorder=new MediaRecorder(videoStream,{mimeType:type,videoBitsPerSecond:2200000,audioBitsPerSecond:128000});
+      recorder.ondataavailable=(event)=>{if(event.data&&event.data.size)recorderChunks.push(event.data);};
+      recorder.onerror=()=>{status.textContent='Video recording failed in this browser. Please use your device screen recorder instead.';};
+      recorder.onstop=()=>{
+        cancelAnimationFrame(videoRaf);
+        videoStream.getTracks().forEach(t=>t.stop());
+        if(audioStream) soundtrackGain.disconnect(audioStream);
+        if(soundtrackGain) soundtrackGain.gain.value=.48;
+        videoExportActive=false;
+        recordButton.disabled=false;
+        recordButton.textContent='✧ Save the birthday video';
+        progressRoot.hidden=true;
+        if(!recorderChunks.length) { status.textContent='The browser did not produce a video file. Please use a screen recorder.';return; }
+        const mime=recorder.mimeType||type;
+        const extension=mime.includes('mp4')?'mp4':'webm';
+        const blob=new Blob(recorderChunks,{type:mime});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');a.href=url;
+        a.download=`Birthday_Memory${person.name?'_'+person.name.replace(/[^a-z0-9-]/gi,'_').slice(0,25):''}.${extension}`;
+        document.body.append(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),60000);
+        status.textContent=`Your birthday video has been prepared as ${extension.toUpperCase()}${audioStream?' with the birthday tune':''}. Check your downloads.`;
+      };
+      // Start the recorder while this click still has user activation.
+      recorder.start(1000);
+      // Browsers also require a gesture to play the music. Start it silently
+      // immediately, then bring the soundtrack in when the wheel begins.
+      birthdayAudio.pause();birthdayAudio.currentTime=0;
+      const soundtrackPlay=birthdayAudio.play();
+      if(soundtrackPlay && soundtrackPlay.catch) soundtrackPlay.catch(()=>{});
+      S.paused=true;
+      progressLabel.textContent='Recording the clock opening…';
+      startTime=performance.now();
+      const finishAtFrame=n*REVEAL+IDLE_AFTER+Math.ceil(VIDEO_TAIL_MS/STEP_MS);
+      const expectedMs=INTRO_VIDEO_MS+finishAtFrame*STEP_MS;
+      const update=(now)=>{
+        if(!videoExportActive||recorder.state==='inactive')return;
+        const elapsed=now-startTime;
+        if(!videoStarted && elapsed>=INTRO_VIDEO_MS) {
+          videoStarted=true;
+          reset(0);acc=0;last=now;S.paused=false;
+          birthdayAudio.currentTime=0;
+          if(soundtrackGain)soundtrackGain.gain.value=.55;
+          progressLabel.textContent='Recording every birthday wish…';
+        }
+        renderVideoFrame(rctx,elapsed,videoStarted);
+        const progress=Math.min(99,Math.round(elapsed/expectedMs*100));
+        progressBar.style.width=progress+'%';
+        if(videoStarted)progressLabel.textContent=`Recording wishes ${Math.min(n,S.shown)} of ${n}…`;
+        if(videoStarted && S.frame>=finishAtFrame) {
+          progressLabel.textContent='Finishing video…';
+          if(recorder.state!=='inactive')recorder.stop();
+          return;
+        }
+        videoRaf=requestAnimationFrame(update);
+      };
+      videoRaf=requestAnimationFrame(update);
+    } catch(error) {
+      videoExportActive=false;
+      recordButton.disabled=false;
+      recordButton.textContent='✧ Save the birthday video';
+      progressRoot.hidden=true;
+      videoStream.getTracks().forEach(t=>t.stop());
+      if(audioStream&&soundtrackGain)soundtrackGain.disconnect(audioStream);
+      if(soundtrackGain)soundtrackGain.gain.value=.48;
+      S.paused=previouslyPaused;
+      status.textContent='Video recording could not start: '+error.message+'. Try Chrome desktop or a device screen recording.';
     }
   });
+
 
   // ---------- start ----------
   new ResizeObserver(resize).observe(stage);

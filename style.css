@@ -285,3 +285,50 @@ html.intro-pending .stage { pointer-events: none; }
   .finale-actions .wish-open,.finale-actions .keepsake-button { min-width:0; flex:1 1 145px; min-height:52px; padding:12px 14px; font-size:13px; }
 }
 @media(prefers-reduced-motion:reduce) {.finale-inner { transition:none; transform:none; filter:none; }}
+
+
+/* V9 — the same night-sky design, without a separate rectangular finale panel. */
+.mobile-kicker svg { display:block; width:100%; height:auto; overflow:visible; }
+.mobile-kicker .arc-main { fill:#f5d39c; font:800 20px var(--ui); letter-spacing:1.8px; }
+.mobile-kicker .arc-sub { fill:#e6bd7e; font:800 12.7px var(--ui); letter-spacing:.85px; }
+@media(max-width:620px) {
+  .mobile-readout { width:min(46vw, 220px); height:clamp(145px,39vw,180px); grid-template-rows:44px minmax(30px,1fr) auto auto auto; gap:2px; }
+  .mobile-kicker { width:100%; align-self:center; height:44px; margin-top:11px; line-height:1; }
+  .mobile-phrase { max-width:100%; margin-top:1px; }
+  .mobile-name { margin-top:1px; }
+}
+@media(max-width:360px) { .mobile-readout { width:47vw; } .mobile-kicker { margin-top:9px; } }
+/* Continuous colour transition from the wheel's lower night sky into its final lines. */
+.finale-section {
+  position:relative; z-index:3;
+  background:linear-gradient(180deg,#40133b 0%,#321137 45%,#1c0c2b 100%);
+  border-top:0; padding:25px 18px 52px;
+}
+.finale-inner { max-width:610px; transform:translateY(18px); filter:blur(5px); }
+.finale-ornament { margin:0 0 13px; color:#deb779; opacity:.83; }
+.finale-label { font:800 10px/1.6 var(--ui); letter-spacing:.28em; color:#e3be87; margin-bottom:7px; }
+.finale-note { padding:0 14px 28px; }
+.finale-note p { margin:0 auto; font:italic 400 clamp(25px,5.7vw,38px)/1.25 var(--display); max-width:560px; color:#fff2df; text-shadow:0 4px 24px rgba(10,4,32,.6); }
+.finale-actions { gap:12px; }
+.finale-actions .wish-open,.finale-actions .keepsake-button {
+  flex:0 1 auto; min-width:190px; min-height:57px; padding:15px 23px;
+  font:800 14px/1.2 var(--ui); border:1px solid rgba(244,204,147,.70);
+  border-radius:999px; color:#fff0d6; background:linear-gradient(145deg,rgba(77,42,100,.84),rgba(28,16,53,.84));
+  box-shadow:0 12px 37px rgba(6,3,17,.23),inset 0 1px 0 rgba(255,237,205,.09);
+  transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;
+}
+.finale-actions .wish-open:hover,.finale-actions .keepsake-button:hover { transform:translateY(-2px);border-color:#ffe7b9;box-shadow:0 16px 44px rgba(6,3,17,.34),0 0 26px rgba(233,190,117,.15); }
+.finale-actions .keepsake-button { color:#f8e4c6; }
+.finale-status { font-size:12px; max-width:600px; padding-inline:14px; }
+.recording-progress { width:min(420px,95%); margin:14px auto 0; color:#ebc995; font:600 12px/1.5 var(--ui); }
+.recording-progress[hidden] { display:none!important; }
+.recording-progress-track { height:4px; overflow:hidden; border-radius:99px; background:rgba(255,238,214,.16); margin-bottom:10px; }
+.recording-progress-track span { display:block; width:0; height:100%; background:#f1c185; border-radius:99px; transition:width .35s linear; }
+@media(max-width:620px){
+  .finale-section { padding:21px 17px 45px; }
+  .finale-note { padding:0 8px 24px; }
+  .finale-actions { flex-direction:column; align-items:stretch; gap:11px; }
+  .finale-actions .wish-open,.finale-actions .keepsake-button { width:min(100%,320px);flex:none; align-self:center; font-size:14px;min-height:56px; }
+}
+/* No invasive audio button unless sound was blocked: gestures anywhere can resume it. */
+.music-toggle.music-blocked { background:rgba(18,10,39,.86); border-color:rgba(238,199,135,.8); color:#ffe6b8; }

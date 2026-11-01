@@ -1,0 +1,511 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>100 Birthday Wishes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;700;800&display=swap">
+<style>
+/* Layout: a full-bleed night-sky stage holding the wheel, with one slim control band underneath.
+   One committed look (dusk purple, party colours on top), so tokens are set once, dark only. */
+:root {
+  --ink: #0b0820;
+  --panel: #130c2b;
+  --line: #2d2252;
+  --text: #f6ecdb;
+  --muted: #a79fc2;
+  --gold: #dcb066;
+  --gold-ink: #2a1b05;
+  --rose: #ff73b3;
+  --display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --ui: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  display: flex; flex-direction: column; min-height: 100%;
+  background: var(--ink); color: var(--text);
+  font: 14px/1.45 var(--ui);
+}
+.stage { position: relative; flex: 1 1 auto; min-height: 340px; overflow: hidden; background: var(--ink); }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: manipulation; cursor: crosshair; }
+.hint {
+  position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; pointer-events: none;
+  font: 700 10px var(--ui); letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+  padding-inline: 16px;
+}
+.controls { background: var(--panel); border-top: 1px solid var(--line); }
+.controls-inner {
+  display: grid; gap: 10px; max-width: 980px; margin-inline: auto;
+  padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field.name { flex: 1 1 170px; max-width: 380px; }
+.field.age { flex: 0 0 84px; }
+.field > span, summary {
+  font: 700 10px var(--ui); letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+}
+input, textarea {
+  box-sizing: border-box;
+  font: 500 14px var(--ui); color: var(--text); background: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; min-width: 0; width: 100%;
+}
+textarea { resize: vertical; line-height: 1.5; }
+input::placeholder { color: #6f6690; }
+.btn {
+  font: 800 12px var(--ui); letter-spacing: .06em; text-transform: uppercase;
+  padding: 9px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--line);
+  background: transparent; color: var(--text);
+}
+.btn:hover { border-color: var(--gold); }
+.btn.primary { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+details { border-top: 1px solid var(--line); padding-top: 10px; }
+summary { cursor: pointer; width: fit-content; }
+.editor { display: grid; gap: 8px; margin-top: 10px; }
+.status { min-height: 1.4em; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.status.bad { color: var(--rose); }
+.status:empty { display: none; }
+.status .link { user-select: all; color: var(--text); }
+@media (max-width: 520px) {
+  .btn { flex: 1 1 auto; }
+}
+</style>
+
+<main class="stage" id="stage">
+  <canvas id="cv" role="img" aria-label="An animated wheel of 100 birthday wishes that ends with fireworks, balloons and confetti"></canvas>
+  <div class="hint">Tap or click anywhere for fireworks</div>
+</main>
+
+<section class="controls" aria-label="Customize the wheel">
+  <div class="controls-inner">
+    <div class="row">
+      <label class="field name"><span>Name</span><input id="name" type="text" maxlength="28" placeholder="Who is it for?" autocomplete="off"></label>
+      <label class="field age"><span>Age</span><input id="age" type="number" min="1" max="150" inputmode="numeric" placeholder="25"></label>
+      <button class="btn primary" id="replay" type="button">Replay</button>
+      <button class="btn" id="pause" type="button">Pause</button>
+      <button class="btn" id="copy" type="button">Copy link</button>
+    </div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <details id="wishbox">
+      <summary>Write your own wishes</summary>
+      <div class="editor">
+        <textarea id="wishes" rows="8" spellcheck="true" aria-label="Wishes, one per line"></textarea>
+        <div class="row">
+          <button class="btn primary" id="apply" type="button">Use these wishes</button>
+          <button class="btn" id="defaults" type="button">Back to the 100</button>
+        </div>
+        <div class="status" id="wishmsg" role="status" aria-live="polite">One wish per line, between 2 and 200.</div>
+      </div>
+    </details>
+  </div>
+</section>
+
+<script>
+(() => {
+  'use strict';
+  const DEFAULT_WISHES = ["Happy Birthday!", "Many happy returns", "Cheers to you today", "Make a wish!", "Another year of you", "You deserve the best", "Wishing you joy", "Hope it's a great one", "Eat all the cake", "Today is yours", "Shine bright today", "Celebrate big", "May your dreams come true", "Here's to your year ahead", "You make the world better", "Blow out every candle", "Age is just a number", "Fabulous at any age", "Better with every year", "Love and laughter today", "Wishing you endless smiles", "Party like it's your day", "May all your wishes come true", "Good health and happiness", "Great things are coming", "You're one in a million", "Thankful for you", "So glad you were born", "Hope today feels magical", "Sending you big hugs", "Enjoy every moment", "The best is yet to come", "You glow brighter each year", "Adventures await you", "May this year be your best", "Cake, candles, confetti!", "Treat yourself today", "You've earned this day", "Rest, laugh, celebrate", "Warmest wishes to you", "Joy to you today", "Here's to many more", "Life looks good on you", "Wishing you peace and joy", "Stay wonderful always", "Keep being you", "Hope your day is sweet", "Wrapped in love today", "A toast to you", "Raise a glass to you", "You're a gift to us all", "Dream big this year", "May luck follow you", "Forever young at heart", "Time flies, you shine", "Cheers to another lap", "Blessings on your day", "May joy find you daily", "Happiest of birthdays", "What a year it's been", "Level up! New year, new you", "Sparkle all day long", "Your smile lights up rooms", "The world is brighter with you", "Wishing you pure happiness", "Hope all your hopes come true", "Go make some memories", "Fill today with fun", "Love you lots today", "Another trip around the sun", "Better and better each year", "Wishing you sweet surprises", "Celebrate being you", "It's your time to shine", "Hugs, cake and good vibes", "Every day with you is a gift", "May your heart be full", "Hope you feel so loved", "You're simply the best", "Make today unforgettable", "Here's to health and wealth", "Bright days ahead for you", "Onward to new adventures", "Smile, it's your birthday", "You make life more fun", "Grateful you're in my life", "Cheers to your next chapter", "May all your days be golden", "Sending birthday magic", "Hope it's everything you want", "Joy today and always", "A day as lovely as you", "Happy day, happy heart", "Cheers, friend!", "Wishing you the world", "Love, light and laughter", "You are so loved", "Thank you for being you", "Many more candles to blow", "Happy Birthday to you!"];
+
+  // ---------- configuration (frame units match the 16 ms tick of the Python original) ----------
+  const TAU = Math.PI * 2, BOX = 800, STEP_MS = 16;
+  const R_INNER = 182, R_OUTER = 342, R_RING = 366, SLIDE = 18, FADE = 40;
+  const REVEAL = 9, GREET = 60, IDLE_AFTER = 150, IDLE_EVERY = 170;
+  const SPIN = 0.0006, BOOST = 0.0006, SWEEP_SPEED = 0.22, SWEEP_W = 3.0;
+  const MAX_SPARKS = 600, MAX_BALLOONS = 6, CONFETTI_N = 70, BOKEH_N = 14, STAR_N = 140;
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const BG_TOP = [0.045, 0.030, 0.125], BG_BOT = [0.250, 0.075, 0.230];
+  const CREAM = [1.0, 0.95, 0.88], GOLD = [0.86, 0.69, 0.40], FLASH = [1.0, 0.97, 0.92];
+  const STOPS = [[1, .45, .70], [1, .60, .40], [1, .84, .40], [.45, .90, .72], [.45, .72, 1]];
+  const UI = '"Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
+  const SERIF = '"Instrument Serif", Georgia, "Times New Roman", serif';
+
+  // ---------- helpers ----------
+  const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
+  const mix = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+  const rgb = (c, a = 1) => `rgba(${Math.round(clamp(c[0]) * 255)},${Math.round(clamp(c[1]) * 255)},${Math.round(clamp(c[2]) * 255)},${clamp(a).toFixed(3)})`;
+  const palette = (k) => { k = clamp(k) * (STOPS.length - 1); const i = Math.min(Math.floor(k), STOPS.length - 2); return mix(STOPS[i], STOPS[i + 1], k - i); };
+  const spaced = (t) => t.toUpperCase().split(/\s+/).filter(Boolean).map((w) => [...w].join(' ')).join('   ');
+  const mulberry32 = (a) => () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- canvas ----------
+  const stage = $('stage'), cv = $('cv'), ctx = cv.getContext('2d');
+  const view = { s: 1, dpr: 1, hw: 400, hh: 400 };
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    view.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.max(1, Math.round(r.width * view.dpr));
+    cv.height = Math.max(1, Math.round(r.height * view.dpr));
+    view.s = Math.min(r.width, r.height) / BOX;
+    view.hw = r.width / 2 / view.s;
+    view.hh = r.height / 2 / view.s;
+  }
+
+  // ---------- state ----------
+  let wishes = DEFAULT_WISHES.slice(), n = wishes.length;
+  let person = { name: '', age: null };
+  let rng = Math.random, S, spokes, bokeh, stars, confetti, balloons, sparks, rockets, meteor, shock, fontPx = 10;
+
+  function fitFont() {
+    for (fontPx = 12; fontPx > 7; fontPx--) {
+      ctx.font = `500 ${fontPx}px ${UI}`;
+      if (Math.max(...wishes.map((w) => ctx.measureText(w).width)) <= R_OUTER - R_INNER) return;
+    }
+  }
+
+  function reset(preroll = 0) {
+    rng = mulberry32(7);
+    n = wishes.length;
+    S = { frame: 0, rot: 0, shown: 0, cur: null, curSince: 0, kind: 'wish', prev: null, fadeLen: 14, tint: CREAM, text: '', counter: '',
+          doneAt: null, greeted: false, nextLaunch: 0, arc: 0, paused: S ? S.paused : false };
+    spokes = wishes.map((text, i) => ({ text, angle: Math.PI / 2 - TAU * i / n, color: palette(i / Math.max(1, n - 1)), born: null }));
+    const R = (a, b) => a + (b - a) * rng();
+    bokeh = Array.from({ length: BOKEH_N }, () => ({ x: R(-560, 560), y: R(-560, 560), r: R(26, 70), vx: R(-.12, .12), vy: R(-.18, -.04), phase: R(0, TAU), hue: rng() }));
+    stars = Array.from({ length: STAR_N }, () => ({ u: rng(), v: rng(), b: R(.15, .5), sz: [.8, 1, 1, 1.4][Math.floor(rng() * 4)], phase: R(0, TAU) }));
+    confetti = Array.from({ length: CONFETTI_N }, () => ({ x: R(-1, 1), y: -(R(0, 1) * 800 + 420), size: R(3, 6.5), fall: R(1.4, 3.4), sway: R(6, 18), phase: R(0, TAU), color: palette(rng()), spin: R(.05, .15) }));
+    balloons = []; sparks = []; rockets = []; meteor = null; shock = null;
+    fitFont();
+    for (let i = 0; i < preroll; i++) advance();
+  }
+
+  // ---------- centre text ----------
+  function setCentre(text, counter, index, tint, kind, len = 14) {
+    S.prev = S.cur !== null ? { text: S.text, counter: S.counter, tint: S.tint } : null;
+    S.cur = index; S.curSince = S.frame; S.tint = tint; S.text = text; S.counter = counter; S.kind = kind; S.fadeLen = len;
+  }
+  const showWish = (i, len = 14) => setCentre(wishes[i], `N° ${String(i + 1).padStart(3, '0')}`, i, mix(CREAM, spokes[i].color, .18), 'wish', len);
+  const greeting = () => person.name ? `Happy Birthday,\n${person.name}!` : 'Happy Birthday!';
+  const showGreeting = () => setCentre(greeting(), `${n} / ${n}`, n - 1, mix(GOLD, FLASH, .5), 'greeting');
+
+  // ---------- fireworks ----------
+  function spark(x, y, vx, vy, life, color, size = 2, gravity = .05, drag = .985) {
+    if (sparks.length < MAX_SPARKS) sparks.push({ x, y, vx, vy, age: 0, life, color, size, gravity, drag });
+  }
+  function burst(x, y, color, count = 56) {
+    for (let k = 0; k < count; k++) {
+      const a = TAU * k / count + (rng() - .5) * .16;
+      const sp = k % 3 ? 3.3 * (.85 + rng() * .15) : .8 + rng() * 2;
+      let tint = mix(color, FLASH, rng() * .35);
+      if (k % 5 === 0) tint = mix(color, palette(rng()), .6);
+      spark(x, y, Math.cos(a) * sp, Math.sin(a) * sp, 48 + Math.floor(rng() * 31), tint, 1.8 + rng());
+    }
+  }
+  function launch() {
+    rockets.push({ x: (rng() * 2 - 1) * view.hw * .8, y: view.hh + 10, vy: -(7 + rng() * 2.5),
+                   target: -view.hh * (.15 + rng() * .65), color: palette(rng()) });
+  }
+
+  // ---------- simulation ----------
+  function revealNext() {
+    spokes[S.shown].born = S.frame;
+    showWish(S.shown, 6);   // quick crossfade: a new wish lands every 9 frames
+    S.shown++;
+    if (S.shown === n) {
+      S.doneAt = S.frame;
+      if (!calm) { shock = { age: 0 }; launch(); launch(); launch(); S.nextLaunch = 45; }
+    }
+  }
+
+  function advance() {
+    S.frame++;
+    S.rot -= (calm ? SPIN * .3 : SPIN) + (S.shown >= n && !calm ? BOOST : 0);
+    if (S.shown < n && S.frame % REVEAL === 0) revealNext();
+    S.arc += (S.shown / n - S.arc) * .2;
+
+    if (S.doneAt !== null) {
+      const since = S.frame - S.doneAt;
+      if (!S.greeted && since >= GREET) { S.greeted = true; showGreeting(); }
+      else if (since > IDLE_AFTER && S.frame - S.curSince > IDLE_EVERY && n > 1) {
+        let k; do { k = Math.floor(rng() * n); } while (k === S.cur);
+        showWish(k);
+      }
+      if (!calm) {
+        if (--S.nextLaunch <= 0) { const c = rng() < .35 ? 2 : 1; for (let i = 0; i < c; i++) launch(); S.nextLaunch = 30 + Math.floor(rng() * 41); }
+        if (S.frame % 75 === 0 && balloons.length < MAX_BALLOONS) {
+          balloons.push({ x: (rng() * 2 - 1) * view.hw * .85, y: view.hh + 70, vy: -(.7 + rng() * .8), sway: 8 + rng() * 14, phase: rng() * TAU, color: palette(rng()) });
+        }
+        for (const c of confetti) {
+          c.y += c.fall; c.phase += .06;
+          if (c.y > view.hh + 12) { c.y = -view.hh - 12 - rng() * 120; c.x = rng() * 2 - 1; }
+        }
+        balloons.forEach((b) => { b.y += b.vy; b.phase += .03; });
+        balloons = balloons.filter((b) => b.y > -view.hh - 100);
+        if (shock && ++shock.age > 50) shock = null;
+      }
+    }
+
+    for (const b of bokeh) {
+      b.x += b.vx; b.y += b.vy; b.phase += .02;
+      if (b.y < -view.hh - b.r) { b.y = view.hh + b.r; b.x = (rng() * 2 - 1) * view.hw; }
+    }
+    if (!calm) {
+      if (!meteor) { if (rng() < .004) meteor = { x: -100 + rng() * 520, y: -view.hh + rng() * 120, dx: -9, dy: 5, age: 0, life: 45 }; }
+      else { meteor.x += meteor.dx; meteor.y += meteor.dy; if (++meteor.age >= meteor.life) meteor = null; }
+      rockets = rockets.filter((r) => {
+        r.y += r.vy;
+        spark(r.x, r.y, 0, 0, 3, FLASH, 2.6, 0);
+        spark(r.x + (rng() - .5) * 2, r.y, (rng() - .5) * .4, .2 + rng() * .6, 16, mix(GOLD, FLASH, .5), 1.8, .02);
+        if (r.y <= r.target) { burst(r.x, r.y, r.color); return false; }
+        return true;
+      });
+    }
+    sparks = sparks.filter((s) => {
+      s.vx *= s.drag; s.vy = s.vy * s.drag + s.gravity; s.x += s.vx; s.y += s.vy;
+      return ++s.age < s.life;
+    });
+  }
+
+  // ---------- drawing ----------
+  function wrap(text, maxW) {
+    const lines = [];
+    for (const para of text.split('\n')) {
+      let line = '';
+      for (const word of para.split(' ')) {
+        const t = line ? line + ' ' + word : word;
+        if (line && ctx.measureText(t).width > maxW) { lines.push(line); line = word; } else line = t;
+      }
+      lines.push(line);
+    }
+    return lines;
+  }
+
+  function draw() {
+    const f = S.frame;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const g = ctx.createLinearGradient(0, 0, 0, cv.height);
+    [0, .25, .5, .75, 1].forEach((t) => g.addColorStop(t, rgb(mix(BG_TOP, BG_BOT, Math.pow(t, 1.4)))));
+    ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
+    const k = view.s * view.dpr;
+    ctx.setTransform(k, 0, 0, k, cv.width / 2, cv.height / 2);
+    ctx.textBaseline = 'middle';
+
+    // bokeh
+    for (const b of bokeh) {
+      const lv = .05 + .03 * Math.sin(b.phase), c = palette(b.hue);
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU);
+      ctx.fillStyle = rgb(c, lv); ctx.fill();
+      ctx.strokeStyle = rgb(c, lv * 1.2); ctx.lineWidth = 1; ctx.stroke();
+    }
+    // stars
+    for (const s of stars) {
+      const x = (s.u - .5) * 2 * view.hw, y = (s.v - .5) * 2 * view.hh;
+      if (Math.hypot(x, y) < R_RING + 6) continue;
+      ctx.fillStyle = rgb(CREAM, s.b * (.75 + .5 * Math.sin(f * .045 + s.phase)));
+      ctx.beginPath(); ctx.arc(x, y, s.sz, 0, TAU); ctx.fill();
+    }
+    // rings
+    [[R_INNER - 14, .35], [R_INNER - 19, .12], [R_RING, .18]].forEach(([r, base], i) => {
+      const lv = S.doneAt !== null && i < 2 ? base * (1 + .7 * Math.sin(f * .07 + i * 1.3)) : base;
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.strokeStyle = rgb(GOLD, lv * 1.15); ctx.lineWidth = 1; ctx.stroke();
+    });
+    // balloons (behind the wheel text)
+    for (const b of balloons) {
+      const sx = b.x + Math.sin(b.phase) * b.sway;
+      ctx.beginPath(); ctx.moveTo(sx, b.y + 19);
+      ctx.quadraticCurveTo(sx + Math.sin(b.phase - .8) * 12, b.y + 45, sx + Math.sin(b.phase - .8) * 7, b.y + 74);
+      ctx.strokeStyle = rgb(CREAM, .35); ctx.lineWidth = 1; ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(sx, b.y, 15, 19, 0, 0, TAU); ctx.fillStyle = rgb(b.color, .78); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(sx - 3, b.y + 24); ctx.lineTo(sx + 3, b.y + 24); ctx.lineTo(sx, b.y + 18); ctx.fillStyle = rgb(b.color, .78); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(sx - 6, b.y - 8, 3, 5, -.5, 0, TAU); ctx.fillStyle = rgb(FLASH, .55); ctx.fill();
+    }
+    // spokes
+    ctx.font = `500 ${fontPx}px ${UI}`;
+    const finished = S.doneAt !== null, sweep = calm ? 0 : (f * SWEEP_SPEED) % n;
+    for (let i = 0; i < n; i++) {
+      const sp = spokes[i]; if (sp.born === null) continue;
+      const u = clamp((f - sp.born) / FADE), e = 1 - Math.pow(1 - u, 3);
+      const a = (((sp.angle + S.rot) % TAU) + TAU) % TAU, r = R_INNER + (1 - e) * SLIDE;
+      let glow = 0;
+      if (finished && !calm) { let d = Math.abs(i - sweep); d = Math.min(d, n - d); glow = Math.exp(-Math.pow(d / SWEEP_W, 2)) * .65; }
+      const pop = u < .6 ? .9 * Math.sin(Math.PI * clamp((u - .1) / .5)) : 0;
+      const fl = Math.max(glow, pop), base = .82 * e;
+      ctx.fillStyle = rgb(mix(sp.color, FLASH, fl), base + (1 - base) * fl);
+      const left = a > Math.PI / 2 && a < 3 * Math.PI / 2;
+      ctx.save(); ctx.translate(r * Math.cos(a), -r * Math.sin(a)); ctx.rotate(left ? Math.PI - a : -a);
+      ctx.textAlign = left ? 'right' : 'left'; ctx.fillText(sp.text, 0, 0); ctx.restore();
+    }
+    // centre
+    const kc = clamp((f - 8) / 40);
+    ctx.textAlign = 'center';
+    ctx.font = `800 10px ${UI}`; ctx.fillStyle = rgb(GOLD, .85 * kc);
+    ctx.fillText(`${[...String(n)].join(' ')}   W A Y S   T O   S A Y`, 0, -72);
+    ctx.fillText('H A P P Y   B I R T H D A Y', 0, -56);
+    if (S.cur !== null) {
+      const fe = clamp((f - S.curSince) / S.fadeLen);
+      const phrase = (o, alpha) => {
+        if (alpha <= 0) return;
+        let size = 27; ctx.font = `italic 400 ${size}px ${SERIF}`;
+        let lines = wrap(o.text, 250);
+        if (lines.length > 2) { size = 22; ctx.font = `italic 400 ${size}px ${SERIF}`; lines = wrap(o.text, 250); }
+        const lh = size * 1.08, y0 = -2 - (lines.length - 1) * lh / 2;
+        ctx.fillStyle = rgb(o.tint, alpha);
+        lines.forEach((ln, i) => ctx.fillText(ln, 0, y0 + i * lh));
+        ctx.font = `800 11px ${UI}`; ctx.fillStyle = rgb(GOLD, .8 * alpha); ctx.fillText(o.counter, 0, 72);
+      };
+      if (S.prev) phrase(S.prev, 1 - fe * 2);      // old wish leaves, then the new one arrives
+      phrase(S, fe * 2 - 1);
+    }
+    ctx.strokeStyle = rgb(GOLD, .5 * kc); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-26, 52); ctx.lineTo(26, 52); ctx.stroke();
+    if (person.name) { ctx.font = `800 10px ${UI}`; ctx.fillStyle = rgb(mix(GOLD, FLASH, .35), .95 * kc); ctx.fillText(spaced(person.name), 0, 94); }
+    if (person.age) { ctx.font = `700 9px ${UI}`; ctx.fillStyle = rgb(GOLD, .7 * kc); ctx.fillText(`T U R N I N G   ${[...String(person.age)].join(' ')}`, 0, 110); }
+    // progress arc and its glowing head
+    if (S.arc > .001) {
+      const end = -Math.PI / 2 + TAU * Math.min(S.arc, .9999);
+      ctx.beginPath(); ctx.arc(0, 0, R_RING, -Math.PI / 2, end); ctx.strokeStyle = rgb(GOLD); ctx.lineWidth = 2; ctx.stroke();
+      const tx = R_RING * Math.cos(end), ty = R_RING * Math.sin(end);
+      const gl = ctx.createRadialGradient(tx, ty, 0, tx, ty, 14);
+      gl.addColorStop(0, rgb(FLASH, .9)); gl.addColorStop(1, rgb(GOLD, 0));
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(tx, ty, 14, 0, TAU); ctx.fill();
+    }
+    // confetti
+    if (S.doneAt !== null && !calm) {
+      for (const c of confetti) {
+        const x = c.x * view.hw + Math.sin(c.phase) * c.sway;
+        ctx.save(); ctx.translate(x, c.y); ctx.rotate(c.phase * c.spin * 12);
+        ctx.fillStyle = rgb(c.color, .95); ctx.fillRect(-c.size / 2, -c.size / 4, c.size, c.size / 2 * Math.abs(Math.cos(c.phase * 1.7)) + 1); ctx.restore();
+      }
+    }
+    // shockwave
+    if (shock) {
+      const rr = R_INNER + shock.age * 9;
+      ctx.beginPath(); ctx.arc(0, 0, rr, 0, TAU); ctx.strokeStyle = rgb(GOLD, 1 - shock.age / 50); ctx.lineWidth = Math.max(1, 4 - shock.age / 14); ctx.stroke();
+    }
+    // shooting star
+    if (meteor) {
+      const fade = 1 - meteor.age / meteor.life, tx = meteor.x - meteor.dx * 6, ty = meteor.y - meteor.dy * 6;
+      const lg = ctx.createLinearGradient(meteor.x, meteor.y, tx, ty);
+      lg.addColorStop(0, rgb(FLASH, .9 * fade)); lg.addColorStop(1, rgb(FLASH, 0));
+      ctx.strokeStyle = lg; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(meteor.x, meteor.y); ctx.lineTo(tx, ty); ctx.stroke();
+    }
+    // sparks (additive for a glow)
+    if (sparks.length) {
+      ctx.globalCompositeOperation = 'lighter';
+      for (const s of sparks) {
+        const fade = 1 - s.age / s.life, a = Math.pow(fade, .8), rr = s.size * (.45 + .55 * fade);
+        ctx.fillStyle = rgb(s.age < 3 ? mix(s.color, FLASH, .8) : s.color, a);
+        ctx.beginPath(); ctx.arc(s.x, s.y, rr, 0, TAU); ctx.fill();
+        ctx.fillStyle = rgb(s.color, a * .14);
+        ctx.beginPath(); ctx.arc(s.x, s.y, rr * 3.2, 0, TAU); ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  }
+
+  // ---------- main loop ----------
+  let last = 0, acc = 0;
+  function loop(t) {
+    requestAnimationFrame(loop);
+    if (!last) last = t;
+    const dt = Math.min(100, t - last); last = t;
+    if (!S.paused) { acc += dt; while (acc >= STEP_MS) { acc -= STEP_MS; advance(); } }
+    draw();
+  }
+
+  // ---------- controls ----------
+  const nameIn = $('name'), ageIn = $('age'), statusEl = $('status');
+  const say = (msg, bad = false) => { statusEl.textContent = msg; statusEl.classList.toggle('bad', bad); };
+  function syncPerson() {
+    person = { name: nameIn.value.trim(), age: ageIn.value ? clamp(parseInt(ageIn.value, 10) || 0, 0, 150) || null : null };
+    if (S.kind === 'greeting') showGreeting();
+  }
+  nameIn.addEventListener('input', syncPerson);
+  ageIn.addEventListener('input', syncPerson);
+
+  $('replay').addEventListener('click', () => { reset(0); acc = 0; $('pause').textContent = 'Pause'; S.paused = false; say(''); });
+  $('pause').addEventListener('click', togglePause);
+  function togglePause() { S.paused = !S.paused; $('pause').textContent = S.paused ? 'Play' : 'Pause'; }
+  addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !/^(INPUT|TEXTAREA|BUTTON|SUMMARY)$/.test(document.activeElement.tagName)) { e.preventDefault(); togglePause(); }
+  });
+
+  cv.addEventListener('pointerdown', (e) => {
+    const r = cv.getBoundingClientRect();
+    burst((e.clientX - r.left - r.width / 2) / view.s, (e.clientY - r.top - r.height / 2) / view.s, palette(rng()));
+  });
+
+  $('copy').addEventListener('click', async () => {
+    // Always share the current website (e.g. GitHub Pages), never a fixed artifact URL.
+    if (location.protocol === 'file:') {
+      say('Open your published GitHub Pages site, then click Copy link to share it.', true);
+      return;
+    }
+    const url = new URL(location.href);
+    url.hash = '';
+    ['name', 'age', 'wishes'].forEach((key) => url.searchParams.delete(key));
+    if (person.name) url.searchParams.set('name', person.name);
+    if (person.age) url.searchParams.set('age', String(person.age));
+    // Include edited wishes only; the default 100 are already in the page.
+    if (wishes.length !== DEFAULT_WISHES.length || wishes.some((wish, i) => wish !== DEFAULT_WISHES[i])) {
+      url.searchParams.set('wishes', wishes.join('\n'));
+    }
+    const link = url.toString();
+    try {
+      await navigator.clipboard.writeText(link);
+      say(link.length > 8000 ? 'Link copied, but it is very long; some apps may shorten it.' : 'Link copied! Name, age and custom wishes will open with it.');
+    } catch {
+      // Browsers can block clipboard access; give the user a selectable link.
+      statusEl.replaceChildren('Copy this link: ');
+      const s = document.createElement('span'); s.className = 'link'; s.textContent = link;
+      statusEl.append(s); statusEl.classList.remove('bad');
+    }
+  });
+
+  const box = $('wishes'), msg = $('wishmsg');
+  const fill = () => { box.value = wishes.join('\n'); };
+  $('apply').addEventListener('click', () => {
+    const list = box.value.split('\n').map((l) => l.trim()).filter(Boolean);
+    if (list.length < 2 || list.length > 200) { msg.textContent = `Need between 2 and 200 wishes, found ${list.length}.`; msg.classList.add('bad'); return; }
+    wishes = list; reset(0); acc = 0; msg.classList.remove('bad'); msg.textContent = `Playing ${list.length} wishes.`;
+  });
+  $('defaults').addEventListener('click', () => { wishes = DEFAULT_WISHES.slice(); fill(); reset(0); acc = 0; msg.classList.remove('bad'); msg.textContent = 'Back to the original 100.'; });
+
+  function readHash() {
+    // Keep compatibility with older links using #First-Name.
+    let h = '';
+    try { h = decodeURIComponent(location.hash.slice(1)); } catch { return; }
+    if (/^[A-Za-z0-9-]{1,28}$/.test(h)) { nameIn.value = h.replace(/-/g, ' '); syncPerson(); }
+  }
+  function readSharedLink() {
+    const params = new URLSearchParams(location.search);
+    const sharedWishes = params.get('wishes');
+    if (sharedWishes !== null && sharedWishes.length <= 30000) {
+      const list = sharedWishes.split('\n').map((line) => line.trim()).filter(Boolean);
+      if (list.length >= 2 && list.length <= 200) {
+        wishes = list;
+        fill();
+        reset(0);
+      }
+    }
+    const sharedName = params.get('name');
+    if (sharedName !== null) nameIn.value = sharedName.slice(0, 28);
+    const sharedAge = params.get('age');
+    if (sharedAge && /^\d{1,3}$/.test(sharedAge) && +sharedAge >= 1 && +sharedAge <= 150) ageIn.value = sharedAge;
+    syncPerson();
+    if (sharedName === null) readHash();
+  }
+  addEventListener('hashchange', readHash);
+
+  // ---------- start ----------
+  new ResizeObserver(resize).observe(stage);
+  resize();
+  fill();
+  reset(0);
+  readSharedLink();
+  const fontsReady = Promise.race([
+    Promise.all([document.fonts.load(`500 12px ${UI}`), document.fonts.load(`italic 400 27px ${SERIF}`)]).catch(() => {}),
+    new Promise((r) => setTimeout(r, 1500)),
+  ]);
+  fontsReady.then(() => {
+    fitFont();
+    // Open on a scene that already has wishes on it; replay starts from empty.
+    reset(calm ? n * REVEAL + GREET + 5 : 150);
+    requestAnimationFrame(loop);
+  });
+})();
+</script>
+
+</body></html>

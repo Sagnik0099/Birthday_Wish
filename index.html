@@ -86,12 +86,13 @@ summary { cursor: pointer; width: fit-content; }
 }
 .inbox-field { max-width: 410px; }
 .mobile-readout { display: none; }
-.wish-open { display: none; position: absolute; z-index: 4; top: max(20px, env(safe-area-inset-top, 0px)); right: 18px;
-  border: 1px solid rgba(220,176,102,.62); color: #f6ecdb; background: rgba(19,12,43,.88); border-radius: 999px;
-  padding: 10px 15px; font: 700 12px var(--ui); letter-spacing: .025em; cursor: pointer;
-  box-shadow: 0 8px 22px rgba(0,0,0,.16); }
-html.gift-view .wish-open:not([hidden]) { display: inline-flex; align-items: center; justify-content: center; }
-.wish-open:hover, .wish-open:focus-visible { border-color: var(--gold); background: #2a1b42; }
+.wish-open { display: none; position: absolute; z-index: 4; left: 50%; bottom: 92px; transform: translateX(-50%) translateY(18px) scale(.96); opacity: 0;
+  border: 1px solid rgba(220,176,102,.72); color: #fff5e7; background: linear-gradient(180deg, rgba(42,27,66,.95), rgba(22,14,44,.96)); border-radius: 999px;
+  padding: 12px 22px; font: 800 12px var(--ui); letter-spacing: .045em; cursor: pointer;
+  box-shadow: 0 14px 38px rgba(0,0,0,.32), 0 0 0 1px rgba(255,239,203,.05) inset; transition: opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease, border-color .25s ease; }
+html.gift-view .wish-open.show { display: inline-flex; align-items: center; justify-content: center; opacity: 1; transform: translateX(-50%) translateY(0) scale(1); animation: wishPulse 2.6s ease-in-out infinite; }
+.wish-open:hover, .wish-open:focus-visible { border-color: var(--gold); background: linear-gradient(180deg, rgba(54,35,82,.98), rgba(31,19,57,.98)); box-shadow: 0 18px 46px rgba(0,0,0,.38), 0 0 0 1px rgba(255,239,203,.08) inset; }
+@keyframes wishPulse { 0%,100% { box-shadow: 0 14px 38px rgba(0,0,0,.32), 0 0 0 0 rgba(220,176,102,.0); } 50% { box-shadow: 0 18px 46px rgba(0,0,0,.38), 0 0 0 8px rgba(220,176,102,.09); } }
 .wish-overlay { position: fixed; inset: 0; z-index: 20; background: rgba(6,4,17,.79); backdrop-filter: blur(5px);
   display: grid; place-items: center; padding: 18px; overflow-y: auto; }
 .wish-overlay[hidden] { display: none !important; }
@@ -117,16 +118,17 @@ html.gift-view .wish-open:not([hidden]) { display: inline-flex; align-items: cen
 .honeypot { position:absolute; left:-10000px; width: 1px; height: 1px; overflow:hidden; }
 @media (max-width: 620px) {
   /* Preserve the original wheel, but give its currently active text a genuinely legible mobile companion. */
-  .stage { min-height: 620px; }
-  .mobile-readout { position: absolute; left: 16px; right: 16px; top: calc(50% + min(48vw, 192px));
-    display: flex; flex-direction: column; align-items: center; gap: 7px; pointer-events: none; text-align: center;
+  .stage { min-height: 740px; }
+  .mobile-readout { position: absolute; left: 18px; right: 18px; bottom: 58px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; text-align: center;
     text-shadow: 0 2px 15px rgba(9,6,22,.9); }
-  .mobile-kicker { color: var(--gold); font: 700 10px var(--ui); letter-spacing: .16em; text-transform: uppercase; }
-  .mobile-phrase { color: #fff1df; font: italic 400 clamp(20px, 6vw, 26px)/1.18 var(--display); max-width: 350px;
+  .mobile-kicker { color: var(--gold); font: 700 11px var(--ui); letter-spacing: .14em; text-transform: uppercase; }
+  .mobile-phrase { color: #fff1df; font: italic 400 clamp(30px, 8vw, 38px)/1.12 var(--display); max-width: 360px;
     overflow-wrap: anywhere; white-space: pre-line; }
-  .mobile-counter { font: 700 10px var(--ui); letter-spacing: .18em; color: #c5abd1; }
-  .hint { bottom: 5px; font-size: 9px; }
-  .wish-open { top: max(16px, env(safe-area-inset-top, 0px)); right: 12px; font-size: 11px; }
+  .mobile-counter { font: 700 11px var(--ui); letter-spacing: .2em; color: #d4bbdf; }
+  .mobile-name { color: #ffe3a6; font: 800 13px var(--ui); letter-spacing: .24em; text-transform: uppercase; max-width: 320px; overflow-wrap: anywhere; }
+  .hint { bottom: 7px; font-size: 9px; }
+  .wish-open { bottom: 130px; font-size: 11px; padding: 12px 20px; }
 }
 @media (prefers-reduced-motion: reduce) { .wish-overlay { backdrop-filter: none; } }
 </style>
@@ -135,9 +137,10 @@ html.gift-view .wish-open:not([hidden]) { display: inline-flex; align-items: cen
   <canvas id="cv" role="img" aria-label="An animated wheel of 100 birthday wishes that ends with fireworks, balloons and confetti"></canvas>
   <div class="hint">Tap or click anywhere for fireworks</div>
   <div class="mobile-readout" id="mobileReadout" aria-live="polite" aria-atomic="true">
-    <div class="mobile-kicker">100 ways to say happy birthday</div>
+    <div class="mobile-kicker">A hundred little wishes, all wrapped in love for you</div>
     <div class="mobile-phrase" id="mobilePhrase">Happy Birthday!</div>
     <div class="mobile-counter" id="mobileCounter"></div>
+    <div class="mobile-name" id="mobileName"></div>
   </div>
   <button type="button" class="wish-open" id="openWish" hidden>✦ Make a wish</button>
 </main>
@@ -249,7 +252,9 @@ html.gift-view .wish-open:not([hidden]) { display: inline-flex; align-items: cen
     rng = mulberry32(7);
     n = wishes.length;
     S = { frame: 0, rot: 0, shown: 0, cur: null, curSince: 0, kind: 'wish', prev: null, fadeLen: 14, tint: CREAM, text: '', counter: '',
-          doneAt: null, greeted: false, nextLaunch: 0, arc: 0, paused: S ? S.paused : false };
+          doneAt: null, greeted: false, nextLaunch: 0, arc: 0, paused: S ? S.paused : false, wishPromptShown: false };
+    $('openWish').hidden = true;
+    $('openWish').classList.remove('show');
     spokes = wishes.map((text, i) => ({ text, angle: Math.PI / 2 - TAU * i / n, color: palette(i / Math.max(1, n - 1)), born: null }));
     const R = (a, b) => a + (b - a) * rng();
     bokeh = Array.from({ length: BOKEH_N }, () => ({ x: R(-560, 560), y: R(-560, 560), r: R(26, 70), vx: R(-.12, .12), vy: R(-.18, -.04), phase: R(0, TAU), hue: rng() }));
@@ -266,6 +271,7 @@ html.gift-view .wish-open:not([hidden]) { display: inline-flex; align-items: cen
     S.cur = index; S.curSince = S.frame; S.tint = tint; S.text = text; S.counter = counter; S.kind = kind; S.fadeLen = len;
     $('mobilePhrase').textContent = text;
     $('mobileCounter').textContent = counter;
+    $('mobileName').textContent = person.name ? `For ${person.name}` : ''; 
   }
   const showWish = (i, len = 14) => setCentre(wishes[i], `N° ${String(i + 1).padStart(3, '0')}`, i, mix(CREAM, spokes[i].color, .18), 'wish', len);
   const greeting = () => person.name ? `Happy Birthday,\n${person.name}!` : 'Happy Birthday!';
@@ -312,6 +318,12 @@ html.gift-view .wish-open:not([hidden]) { display: inline-flex; align-items: cen
       else if (since > IDLE_AFTER && S.frame - S.curSince > IDLE_EVERY && n > 1) {
         let k; do { k = Math.floor(rng() * n); } while (k === S.cur);
         showWish(k);
+      }
+      if (!S.wishPromptShown && document.documentElement.classList.contains('gift-view') && since >= IDLE_AFTER) {
+        const wishBtn = $('openWish');
+        wishBtn.hidden = false;
+        requestAnimationFrame(() => wishBtn.classList.add('show'));
+        S.wishPromptShown = true;
       }
       if (!calm) {
         if (--S.nextLaunch <= 0) { const c = rng() < .35 ? 2 : 1; for (let i = 0; i < c; i++) launch(); S.nextLaunch = 30 + Math.floor(rng() * 41); }
@@ -422,8 +434,8 @@ html.gift-view .wish-open:not([hidden]) { display: inline-flex; align-items: cen
     const kc = clamp((f - 8) / 40);
     ctx.textAlign = 'center';
     ctx.font = `800 10px ${UI}`; ctx.fillStyle = rgb(GOLD, .85 * kc);
-    ctx.fillText(`${[...String(n)].join(' ')}   W A Y S   T O   S A Y`, 0, -72);
-    ctx.fillText('H A P P Y   B I R T H D A Y', 0, -56);
+    ctx.fillText('A   H U N D R E D   L I T T L E   W I S H E S', 0, -72);
+    ctx.fillText('W R A P P E D   I N   L O V E   F O R   Y O U', 0, -56);
     if (S.cur !== null) {
       const fe = clamp((f - S.curSince) / S.fadeLen);
       const phrase = (o, alpha) => {
@@ -440,8 +452,8 @@ html.gift-view .wish-open:not([hidden]) { display: inline-flex; align-items: cen
       phrase(S, fe * 2 - 1);
     }
     ctx.strokeStyle = rgb(GOLD, .5 * kc); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-26, 52); ctx.lineTo(26, 52); ctx.stroke();
-    if (person.name) { ctx.font = `800 10px ${UI}`; ctx.fillStyle = rgb(mix(GOLD, FLASH, .35), .95 * kc); ctx.fillText(spaced(person.name), 0, 94); }
-    if (person.age) { ctx.font = `700 9px ${UI}`; ctx.fillStyle = rgb(GOLD, .7 * kc); ctx.fillText(`T U R N I N G   ${[...String(person.age)].join(' ')}`, 0, 110); }
+    if (person.name) { ctx.font = `800 ${view.s < .8 ? 12 : 10}px ${UI}`; ctx.fillStyle = rgb(mix(GOLD, FLASH, .35), .98 * kc); ctx.fillText(spaced(person.name), 0, 96); }
+    if (person.age) { ctx.font = `700 ${view.s < .8 ? 10 : 9}px ${UI}`; ctx.fillStyle = rgb(GOLD, .76 * kc); ctx.fillText(`T U R N I N G   ${[...String(person.age)].join(' ')}`, 0, 113); }
     // progress arc and its glowing head
     if (S.arc > .001) {
       const end = -Math.PI / 2 + TAU * Math.min(S.arc, .9999);
@@ -583,7 +595,6 @@ html.gift-view .wish-open:not([hidden]) { display: inline-flex; align-items: cen
     const inbox = params.get('inbox');
     if (inbox && inbox.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inbox)) {
       $('senderEmail').value = inbox;
-      if (document.documentElement.classList.contains('gift-view')) $('openWish').hidden = false;
     }
     syncPerson();
     if (sharedName === null) readHash();

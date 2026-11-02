@@ -42,10 +42,14 @@
     view.dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = Math.max(1, Math.round(r.width * view.dpr));
     cv.height = Math.max(1, Math.round(r.height * view.dpr));
-    const giftBottomRoom = document.documentElement.classList.contains('gift-view') ? 120 : 0;
-    view.s = Math.min(r.width, Math.max(300, r.height - giftBottomRoom)) / BOX;
+    const isGift = document.documentElement.classList.contains('gift-view');
+    const verticalFit = isGift ? (r.width > 620 ? r.height * .67 : (r.height < 540 ? r.height * .60 : r.height - 120)) : r.height;
+    view.s = Math.min(r.width, Math.max(300, verticalFit)) / BOX;
     view.hw = r.width / 2 / view.s;
     view.hh = r.height / 2 / view.s;
+    // Circle's bottom edge in CSS pixels. Finale is positioned here from the
+    // beginning, so revealing it never pushes or moves the wheel.
+    stage.style.setProperty('--wheel-bottom', Math.round(r.height/2 + R_RING*view.s + 8)+'px');
     if (wishes && wishes.length) fitFont();
   }
 
@@ -80,8 +84,6 @@
     finaleSection.classList.remove('show');
     $('memoryStatus').textContent = '';
     $('openWish').hidden = false;
-    $('saveMemory').hidden = false;
-    $('replayMemory').hidden = true;
     spokes = wishes.map((text, i) => ({ text, angle: Math.PI / 2 - TAU * i / n, color: palette(i / Math.max(1, n - 1)), born: null }));
     const R = (a, b) => a + (b - a) * rng();
     bokeh = Array.from({ length: BOKEH_N }, () => ({ x: R(-560, 560), y: R(-560, 560), r: R(26, 70), vx: R(-.12, .12), vy: R(-.18, -.04), phase: R(0, TAU), hue: rng() }));
@@ -649,17 +651,15 @@
     }
   }
 
-  $('replayMemory').addEventListener('click', () => location.reload());
 
   // ---------- Keepsake video — separate renderer, never resets the live wheel ----------
-  const recordButton = $('saveMemory');
   const status = $('memoryStatus');
   const progressRoot = $('recordingProgress');
   const progressBar = $('recordingProgressBar');
   const progressLabel = $('recordingProgressLabel');
   const downloadLink = $('videoDownloadLink');
   const cancelButton = $('cancelRecording');
-  const RECORD_INTRO_MS = 3600;
+  const RECORD_INTRO_MS = 8850;
   const RECORD_TAIL_MS = 6200;
   let recording = null, downloadURL = null;
   let recAudioCtx = null, recAudioSource = null, recSoundOut = null;
@@ -790,24 +790,28 @@
   }
   function setRecordUI(active){
     videoExportActive=active;
-    recordButton.disabled=active;
-    recordButton.querySelector('.action-label').textContent=active?'Recording your memory…':'Save the birthday video';
-    cancelButton.hidden=!active;
-    progressRoot.hidden=!active;
+    // Recording is silent in the interface; no Save/Watch Again controls.
+    progressRoot.hidden=true;
+    cancelButton.hidden=true;
   }
+  let recordingSoundPlayer=null;
   async function prepareRecordedAudio(){
     const AudioCtor=window.AudioContext||window.webkitAudioContext;
     if(!AudioCtor) return null;
     if(!recAudioCtx){
       recAudioCtx=new AudioCtor();
-      recAudioSource=recAudioCtx.createMediaElementSource(birthdayAudio);
-      // Keep normal playback audible, while routing an independent copy to the recording.
-      recAudioSource.connect(recAudioCtx.destination);
+      recordingSoundPlayer=new Audio(birthdayAudio.currentSrc||birthdayAudio.src);
+      recordingSoundPlayer.loop=true;
+      recordingSoundPlayer.preload='auto';
+      recAudioSource=recAudioCtx.createMediaElementSource(recordingSoundPlayer);
     }
     recSoundOut=recAudioCtx.createMediaStreamDestination();
     recAudioGain=recAudioCtx.createGain();recAudioGain.gain.value=0;
     recAudioSource.connect(recAudioGain);recAudioGain.connect(recSoundOut);
-    await recAudioCtx.resume();
+    // The audio track can be captured without a microphone permission prompt.
+    // Browser autoplay rules may keep this context/player suspended until a tap.
+    // Never await resume here: autoplay restrictions can leave it pending forever.
+    recAudioCtx.resume().catch(()=>{});
     return recSoundOut.stream.getAudioTracks()[0]||null;
   }
   let cancelled=false;
@@ -815,14 +819,10 @@
     if(!state)return;
     cancelAnimationFrame(state.raf);
     state.stream.getTracks().forEach(t=>t.stop());
+    if(recordingSoundPlayer){try{recordingSoundPlayer.pause();recordingSoundPlayer.currentTime=0;}catch{}}
     if(recAudioGain){try{recAudioGain.disconnect();}catch{}}
-    recAudioGain=null; recSoundOut=null;
+    recAudioGain=null;recSoundOut=null;
     setRecordUI(false);
-    try{
-      birthdayAudio.pause();
-      birthdayAudio.currentTime=audioWasAt;
-      if(!audioWasPaused) birthdayAudio.play().catch(()=>{});
-    }catch{}
   }
   cancelButton.addEventListener('click',()=>{
     if(!recording)return;
@@ -830,8 +830,8 @@
     status.textContent='Recording cancelled. Your birthday greeting is unchanged.';
     if(recording.rec.state!=='inactive')recording.rec.stop();
   });
-  recordButton.addEventListener('click',async (event)=>{
-    event.preventDefault();event.stopPropagation();
+  async function startAutomaticRecording(){
+    if(!document.documentElement.classList.contains('gift-view')) return;
     if(videoExportActive)return;
     const mime=supportedVideoType();
     if(!mime){
@@ -841,13 +841,9 @@
     cancelled=false;
     if(downloadURL){URL.revokeObjectURL(downloadURL);downloadURL=null;}
     downloadLink.hidden=true;downloadLink.removeAttribute('href');
-    status.textContent='Preparing a complete video. The birthday wheel will stay just as it is.';
+    status.textContent='';
     progressBar.style.width='0%';progressLabel.textContent='Recording the clock opening…';
-    audioWasPaused=birthdayAudio.paused;audioWasAt=birthdayAudio.currentTime;
-    // Start soundtrack under this click's user activation; the recording gain is silent during the clock.
-    try{birthdayAudio.pause();birthdayAudio.currentTime=0;}catch{}
-    const playPromise=birthdayAudio.play();
-    if(playPromise?.catch)playPromise.catch(()=>{});
+    // Keep the recipient's own soundtrack untouched throughout recording.
     const output=document.createElement('canvas');output.width=720;output.height=1280;
     const g=output.getContext('2d',{alpha:false});
     const stream=output.captureStream(30);
@@ -859,9 +855,9 @@
         const audioTrack=await prepareRecordedAudio();
         if(audioTrack)stream.addTrack(audioTrack);
       }catch(e){status.textContent='Recording video; soundtrack capture was unavailable on this device.';}
-      const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2500000,audioBitsPerSecond:128000});
+      const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2200000,audioBitsPerSecond:112000});
       const endMs=RECORD_INTRO_MS+n*REVEAL*STEP_MS+GREET*STEP_MS+RECORD_TAIL_MS;
-      state={rec,stream,raf:0,stopped:false,start:0};recording=state;
+      state={rec,stream,raf:0,stopped:false,start:0,musicStarted:false};recording=state;
       rec.ondataavailable=(e)=>{if(e.data?.size)chunks.push(e.data);};
       rec.onerror=()=>{status.textContent='Your browser stopped the recording. Please use its screen recorder instead.';};
       rec.onstop=()=>{
@@ -876,16 +872,23 @@
         downloadURL=URL.createObjectURL(file);
         downloadLink.href=downloadURL;
         downloadLink.download=`Birthday_Memory${person.name?'_'+person.name.replace(/[^a-z0-9-]/gi,'_').slice(0,24):''}.${ext}`;
-        downloadLink.hidden=false;
+        // Try a programmatic download once; browsers may block unattended downloads.
+        // The small fallback link is available only after the finale is revealed.
         progressBar.style.width='100%';
-        status.textContent=`Video ready (${ext.toUpperCase()}, ${(file.size/1048576).toFixed(1)} MB). Tap the gold button below to save it to your device.`;
-        // A direct tap on the visible link avoids Android/browser blocking delayed downloads.
+        status.textContent='';
+        try { downloadLink.click(); } catch(e) { /* keep the manual fallback */ }
+        // Browser APIs cannot write to Android's Gallery directly.
+        downloadLink.hidden=false;
       };
       rec.start(1000);
       state.start=performance.now();
       const update=(now)=>{
         if(!videoExportActive||rec.state==='inactive')return;
         const elapsed=now-state.start;
+        if(elapsed>=RECORD_INTRO_MS && !state.musicStarted){
+          state.musicStarted=true;
+          if(recordingSoundPlayer) recordingSoundPlayer.play().catch(()=>{});
+        }
         if(recAudioGain) recAudioGain.gain.value=elapsed>=RECORD_INTRO_MS?.55:0;
         drawRecordFrame(g,elapsed);
         progressBar.style.width=Math.min(99,Math.floor(100*elapsed/endMs))+'%';
@@ -895,14 +898,14 @@
         state.raf=requestAnimationFrame(update);
       };
       state.raf=requestAnimationFrame(update);
-      status.textContent='Recording in the background. Keep this tab open; your birthday wheel will not restart.';
+      status.textContent='';
     }catch(error){
       if(state)cleanupRecord(state);
       else {stream.getTracks().forEach(t=>t.stop());setRecordUI(false);}
       recording=null;
       status.textContent='Video recording could not start: '+error.message;
     }
-  });
+   }
 
   // ---------- start ----------
   new ResizeObserver(resize).observe(stage);
@@ -921,5 +924,10 @@
     reset(0);
     beginOpening();
     requestAnimationFrame(loop);
+    // Gift links start creating the keepsake automatically, in parallel with the
+    // live animation. We request (but cannot guarantee) an automatic download.
+    if(document.documentElement.classList.contains('gift-view')) {
+      setTimeout(() => { startAutomaticRecording().catch(()=>{}); }, 60);
+    }
   });
 })();

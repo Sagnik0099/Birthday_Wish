@@ -3,7 +3,7 @@
 <style>html.gift-view .controls { display: none !important; }</style>
 <script>
   (() => {
-    const params = new URLSearchParams(window.__BIRTHDAY_KEEPSAKE__ || location.search);
+    const params = new URLSearchParams(location.search);
     // Also recognize personalized links made with the previous version.
     if (params.get('gift') === '1' || ['name', 'age', 'wishes'].some(key => params.has(key))) {
       document.documentElement.classList.add('gift-view', 'intro-pending');
@@ -26,11 +26,17 @@
         <div class="clock-hand clock-hour"></div><div class="clock-hand clock-minute"></div><div class="clock-hand clock-second"></div><div class="clock-pin"></div>
       </div>
     </div>
+    <div class="time-journey" id="timeJourney" hidden aria-label="Years passed since birth">
+      <div class="journey-overline">A JOURNEY THROUGH TIME</div>
+      <div class="journey-timeline" aria-hidden="true"><div class="journey-line"></div><div class="journey-pips" id="journeyPips"></div></div>
+      <div class="journey-years"><span id="journeyFrom"></span><span class="journey-number" id="journeyNumber">0</span><span id="journeyTo"></span></div>
+      <div class="journey-caption" id="journeyCaption"></div>
+    </div>
     <h1 class="opening-title">Some moments deserve<br><em>a little magic.</em></h1>
     <p class="opening-subtitle" id="openingSubtitle">And today is one of them.</p>
   </div>
 </div>
-<audio id="birthdayAudio" src="birthday-tune.mp3" preload="none" loop></audio>
+<audio id="birthdayAudio" src="birthday-tune.mp3" preload="auto" loop></audio>
 <main class="stage" id="stage">
   <canvas id="cv" role="img" aria-label="An animated wheel of 100 birthday wishes that ends with fireworks, balloons and confetti"></canvas>
   <div class="hint">Tap or click anywhere for fireworks</div>
@@ -60,13 +66,6 @@
     <div class="finale-actions">
       <button type="button" class="wish-open" id="openWish"><span class="action-icon" aria-hidden="true">✦</span><span class="action-label">Make a wish</span></button>
     </div>
-    <div class="finale-status" id="memoryStatus" role="status" aria-live="polite"></div>
-    <a id="videoDownloadLink" class="video-download-ready" hidden>↓ If the video did not download, tap here</a>
-    <div class="recording-progress" id="recordingProgress" hidden>
-      <div class="recording-progress-track"><span id="recordingProgressBar"></span></div>
-      <span id="recordingProgressLabel">Preparing your video…</span>
-      <button id="cancelRecording" class="recording-cancel" type="button" hidden>Cancel recording</button>
-    </div>
   </div>
 </section>
 </main>
@@ -76,11 +75,14 @@
     <div class="row">
       <label class="field name"><span>Name</span><input id="name" type="text" maxlength="28" placeholder="Who is it for?" autocomplete="off"></label>
       <label class="field age"><span>Age</span><input id="age" type="number" min="1" max="150" inputmode="numeric" placeholder="25"></label>
+      <label class="field birthdate-field"><span>Birth date (optional)</span><input id="birthDate" type="date" aria-describedby="birthdayHelp"></label>
+      <label class="field year-field"><span>Celebration year</span><input id="celebrationYear" type="number" min="1901" max="2100" step="1" inputmode="numeric" aria-describedby="birthdayHelp"></label>
       <button class="btn primary" id="replay" type="button">Replay</button>
       <button class="btn" id="pause" type="button">Pause</button>
       <button class="btn" id="copy" type="button">Copy link</button>
     </div>
     <div class="status" id="status" role="status" aria-live="polite"></div>
+    <div id="birthdayHelp" class="field-help birthday-help">Optional: adding the birth date reveals a small journey-through-the-years scene before the wish wheel. It is included in the shared link, so only use a birth date you're comfortable sharing.</div>
     <label class="field sender-note-field" for="senderNoteInput"><span>A personal note (optional)</span><textarea id="senderNoteInput" rows="3" maxlength="360" placeholder="A little something just for your friend..." aria-describedby="senderNoteHelp"></textarea></label>
     <div class="field-help" id="senderNoteHelp">Appears gracefully after all the birthday wishes. Friendly, personal, entirely optional.</div>
     <details id="inboxSettings">

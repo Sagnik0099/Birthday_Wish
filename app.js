@@ -49,7 +49,7 @@
     view.hh = r.height / 2 / view.s;
     // Circle's bottom edge in CSS pixels. Finale is positioned here from the
     // beginning, so revealing it never pushes or moves the wheel.
-    stage.style.setProperty('--wheel-bottom', Math.round(r.height/2 + R_RING*view.s + 8)+'px');
+    stage.style.setProperty('--wheel-bottom', Math.round(r.height/2 + R_RING*view.s + (r.height < 540 ? 13 : 22))+'px');
     if (wishes && wishes.length) fitFont();
   }
 
@@ -105,7 +105,6 @@
     $('mobileCounter').textContent = counter;
     $('mobileName').textContent = prettyName(person.name);
     $('mobileName').classList.toggle('compact', person.name.length > 15);
-    $('mobileAge').textContent = person.age ? `TURNING ${person.age}` : '';
   }
   const showWish = (i, len = 14) => setCentre(wishes[i], `N° ${String(i + 1).padStart(3, '0')}`, i, mix(CREAM, spokes[i].color, .18), 'wish', len);
   const greeting = () => 'Happy Birthday!'; // Name already appears separately, so it is never duplicated.
@@ -321,10 +320,6 @@
         ctx.fillStyle = rgb(mix(GOLD, FLASH, .35), .99 * kc);
         ctx.fillText(prettyName(person.name), 0, 126, 295);
       }
-      if (person.age) {
-        ctx.font = `700 12px ${UI}`; ctx.fillStyle = rgb(GOLD, .8 * kc);
-        ctx.fillText(`TURNING ${person.age}`, 0, 153);
-      }
     }
     // progress arc and its glowing head
     if (S.arc > .001) {
@@ -386,7 +381,7 @@
   function syncPerson() {
     person = { name: nameIn.value.trim(), age: ageIn.value ? clamp(parseInt(ageIn.value, 10) || 0, 0, 150) || null : null };
     if (S.kind === 'greeting') showGreeting();
-    else { $('mobileName').textContent = prettyName(person.name); $('mobileName').classList.toggle('compact', person.name.length > 15); $('mobileAge').textContent = person.age ? `TURNING ${person.age}` : ''; }
+    else { $('mobileName').textContent = prettyName(person.name); $('mobileName').classList.toggle('compact', person.name.length > 15); }
   }
   function readBirthdayDate() {
     const d = birthIn.value;

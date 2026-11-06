@@ -9,13 +9,14 @@
       document.documentElement.classList.add('gift-view', 'intro-pending');
     }
   })();
-</script></head><body>
+</script>
 <title>100 Birthday Wishes</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=17-20261106">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Great+Vibes&family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="style.css?v=18-20261107">
+</head><body>
 
 <div class="opening" id="opening" hidden aria-label="Birthday surprise opening">
   <div class="opening-stars" aria-hidden="true"></div>
@@ -64,7 +65,7 @@
     </div>
     <div class="finale-actions">
       <button type="button" class="wish-open" id="openWish"><span class="action-icon" aria-hidden="true">✦</span><span class="action-label">Make a wish</span></button>
-      <button type="button" class="keepsake-button letter-revisit" id="readLetterAgain"><span class="action-icon" aria-hidden="true">✉</span><span class="action-label">Read the letter again</span></button>
+      <button type="button" class="keepsake-button letter-revisit" id="readLetterAgain"><svg class="action-icon icon-envelope" aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg><span class="action-label">Read the letter again</span></button>
     </div>
   </div>
 </section>
@@ -118,16 +119,20 @@
 <!-- A single, non-romantic handwritten letter. The original wheel and finale remain intact underneath. -->
 <div class="birthday-letter-overlay" id="birthdayLetter" hidden>
   <section class="birthday-letter-scene" role="dialog" aria-modal="true" aria-labelledby="letterTitle" tabindex="-1">
-    <button type="button" class="birthday-letter-close-x" id="closeLetterTop" aria-label="Close letter and return to the birthday wishes">×</button>
-    <div class="birthday-letter-envelope" aria-hidden="true"><span class="birthday-letter-envelope-seal">✦</span></div>
-    <article class="birthday-letter-paper" id="letterPaper">
+    <div class="birthday-letter-envelope" aria-hidden="true"><span class="birthday-letter-envelope-back"></span><span class="birthday-letter-envelope-peek"></span><span class="birthday-letter-envelope-flap"></span><span class="birthday-letter-envelope-front"></span><span class="birthday-letter-envelope-seal">✦</span></div>
+    <article class="birthday-letter-paper" id="letterPaper" tabindex="0" aria-label="Your handwritten birthday letter">
+      <div class="birthday-letter-decor" aria-hidden="true">✿ <span>✧</span> ❀</div>
       <div class="birthday-letter-overline">A LITTLE NOTE FOR YOUR BIRTHDAY</div>
       <h2 class="birthday-letter-title" id="letterTitle">Dear friend,</h2>
+      <div class="birthday-letter-rule" aria-hidden="true"><span></span>✦<span></span></div>
       <div class="birthday-letter-ink" id="letterInk" aria-hidden="true"></div>
       <div class="birthday-letter-signature" id="letterSignature"></div>
+      <div class="birthday-letter-decor birthday-letter-decor-bottom" aria-hidden="true">✦ &nbsp; ❀ &nbsp; ✦</div>
     </article>
     <div class="birthday-letter-accessible" id="letterAccessible" aria-live="off"></div>
-    <button type="button" class="birthday-letter-return" id="closeLetter">Back to your birthday wishes <span aria-hidden="true">→</span></button>
+    <div class="birthday-letter-status" id="letterStatus" aria-live="polite">A little note is opening…</div>
+    <div class="birthday-letter-progress" aria-hidden="true"><span id="letterProgress"></span></div>
+    <button type="button" class="birthday-letter-return" id="closeLetter">Turn the page <span aria-hidden="true">↗</span></button>
   </section>
 </div>
 
@@ -136,16 +141,17 @@
     <button class="wish-close" id="closeWish" type="button" aria-label="Close wish form">×</button>
     <div class="wish-ornament" aria-hidden="true">✦ ✧ ✦</div>
     <h2 id="wishTitle">Make a wish</h2>
+    <p class="wish-mode-caption" id="wishModeCaption"></p>
     <form id="wishForm">
       <label for="wishText">Your wish</label>
       <textarea id="wishText" name="message" rows="5" maxlength="1200" minlength="2" required placeholder="Write your birthday wish…"></textarea>
       <div class="honeypot" aria-hidden="true"><label>Leave empty <input id="wishTrap" tabindex="-1" autocomplete="off"></label></div>
-      <button type="submit" id="sendWish" class="wish-send">Send my wish ✨</button>
+      <button type="submit" id="sendWish" class="wish-send">Make my wish ✨</button>
       <div id="wishResult" class="wish-result" role="status" aria-live="polite"></div>
     </form>
   </section>
 </div>
 
-<script defer src="app.js?v=17-20261106"></script>
+<script defer src="app.js?v=18-20261107"></script>
 
 </body></html>

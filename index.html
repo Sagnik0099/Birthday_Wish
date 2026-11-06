@@ -10,12 +10,12 @@
     }
   })();
 </script>
-<title>100 Birthday Wishes · A Letter Written for You · V15</title>
+<title>100 Birthday Wishes · A Note for You · V16</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Great+Vibes&family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=15-20261106">
+<link rel="stylesheet" href="style.css?v=16-20261106-b">
 </head><body>
 
 <div class="opening" id="opening" hidden aria-label="Birthday surprise opening">
@@ -57,28 +57,13 @@
     <div class="mobile-counter" id="mobileCounter"></div>
     <div class="mobile-name" id="mobileName"></div>
   </div>
-  <div class="mobile-wish-ticker" id="mobileWishTicker" aria-live="off">
-    <span class="ticker-star" aria-hidden="true">✧</span>
-    <div><span class="ticker-number" id="tickerNumber">WISH 001 OF 100</span><p id="tickerText">A hundred little moments, just for you.</p></div>
-    <span class="ticker-star" aria-hidden="true">✧</span>
-  </div>
-<section class="finale-section" id="finaleSection" hidden aria-label="Birthday finale">
-  <div class="finale-inner">
-    <div class="finale-flourish" aria-hidden="true">✧ &nbsp; ♡ &nbsp; ✧</div>
-    <p class="finale-eyebrow">ONE MORE LITTLE MOMENT</p>
-    <h2 class="finale-title">Now, it’s your turn to wish.</h2>
-    <div class="finale-note" id="finaleNote" hidden>
-      <div class="finale-label">FOR ALL THE SMILES STILL TO COME</div>
-      <p id="finaleMessage"></p>
-    </div>
+  <!-- The original wheel stays visible when the letter closes. Only two choices appear below it. -->
+  <section class="finale-section wheel-finish-actions" id="finaleSection" hidden aria-label="Birthday wish actions">
     <div class="finale-actions">
-      <button type="button" class="wish-open" id="openWish"><span class="action-icon" aria-hidden="true">✦</span><span class="action-label">Make a wish</span></button>
-      <button type="button" class="keepsake-button" id="readLetterAgain">♡ Read the letter again</button>
-      <button type="button" class="keepsake-button" id="readAllWishes">✧ All 100 wishes</button>
-      <button type="button" class="keepsake-button" id="finaleEditorReturn" hidden>↶ Back to editor</button>
+      <button type="button" class="wish-open" id="openWish"><span class="action-icon" aria-hidden="true">✦</span><span class="action-label">Make a Wish</span></button>
+      <button type="button" class="keepsake-button" id="readLetterAgain">✉ Read the Letter Again</button>
     </div>
-  </div>
-</section>
+  </section>
 </main>
 
 <!-- The letter is a self-playing chapter between the wheel and the final wish. -->
@@ -86,45 +71,33 @@
   <button type="button" id="letterMusicToggle" class="letter-music-toggle" aria-pressed="false">♫ Music</button>
   <div class="letter-ambient" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span><span>✧</span></div>
   <div class="letter-scene-inner">
-    <p class="letter-scene-label">A LITTLE SOMETHING, JUST FOR YOU</p>
+    <p class="letter-scene-label">A BIRTHDAY NOTE, JUST FOR YOU</p>
     <div class="letter-envelope" id="letterEnvelope" aria-hidden="true">
       <div class="envelope-back"></div><div class="envelope-letter-peek"></div><div class="envelope-front"></div><div class="envelope-flap"></div>
-      <div class="envelope-seal">♡</div>
+      <div class="envelope-seal">✦</div>
     </div>
     <div class="letter-paper-shell" id="letterPaperShell">
       <article class="letter-paper" id="letterPaper" aria-label="A handwritten birthday letter" tabindex="0">
-        <div class="letter-paper-decor decor-top" aria-hidden="true">✿ <span>✧</span> ❀</div>
+        <div class="letter-paper-decor decor-top" aria-hidden="true">✦ <span>✧</span> ✦</div>
         <div class="letter-dateline" id="letterDateline">A day worth remembering</div>
-        <h2 class="letter-heading" id="letterHeading">For you, always <span>♡</span></h2>
+        <h2 class="letter-heading" id="letterHeading">A note for you</h2>
         <div class="letter-divider" aria-hidden="true"><span></span>✦<span></span></div>
-        <p class="letter-writing" id="letterWriting" aria-hidden="true"><span id="letterInkText"></span><span class="letter-pen-caret" id="letterPenCaret">✍</span></p>
+        <p class="letter-writing" id="letterWriting" aria-hidden="true"><span id="letterInkText"></span></p>
         <p class="visually-hidden" id="letterFullAccessible"></p>
         <div class="letter-signature" id="letterSignature" hidden>
-          <span>With all my heart,</span>
+          <span>With warm wishes,</span>
           <strong id="letterSignName"></strong>
-          <em aria-hidden="true">♡</em>
         </div>
-        <div class="letter-paper-decor decor-bottom" aria-hidden="true">❦ &nbsp; ♡ &nbsp; ❦</div>
+        <div class="letter-paper-decor decor-bottom" aria-hidden="true">✧ &nbsp; ✦ &nbsp; ✧</div>
       </article>
     </div>
     <div class="letter-footer">
       <p class="letter-status" id="letterStatus" aria-live="polite">A letter is finding its way to you…</p>
       <div class="ink-progress" aria-hidden="true"><span id="inkProgressFill"></span></div>
-      <button type="button" class="letter-continue" id="letterContinue" hidden>Turn the page <span aria-hidden="true">↗</span></button>
+      <button type="button" class="letter-continue" id="letterContinue" hidden>Back to the Birthday Wheel <span aria-hidden="true">↗</span></button>
       <button type="button" class="letter-quiet-close" id="letterPreviewClose" hidden>Back to editor</button>
       <button type="button" class="letter-quiet-close" id="letterEditorReturn" hidden>↶ Back to editor</button>
     </div>
-  </div>
-</section>
-
-<section class="wishes-journal" id="wishesJournal" hidden aria-labelledby="journalTitle">
-  <div class="journal-panel" role="dialog" aria-modal="true" aria-labelledby="journalTitle" tabindex="-1">
-    <button class="journal-close" id="closeJournal" type="button" aria-label="Close all wishes">×</button>
-    <div class="journal-symbol" aria-hidden="true">✧ ♡ ✧</div>
-    <p class="journal-subtitle">A HUNDRED LITTLE REASONS TO SMILE</p>
-    <h2 id="journalTitle">Every wish, kept safe.</h2>
-    <p class="journal-description">All the little wishes from your birthday wheel, in a place you can actually read them.</p>
-    <ol id="journalList" class="journal-list"></ol>
   </div>
 </section>
 
@@ -142,15 +115,15 @@
     <div class="status" id="status" role="status" aria-live="polite"></div>
     <div id="birthdayHelp" class="field-help birthday-help">Optional: adding the birth date reveals a small journey-through-the-years scene before the wish wheel. It is included in the shared link, so only use a birth date you're comfortable sharing.</div>
     <label class="field sender-note-field" for="senderNoteInput"><span>A final personal note (optional)</span><textarea id="senderNoteInput" rows="4" maxlength="1200" placeholder="A little something just for your friend..." aria-describedby="senderNoteHelp"></textarea></label>
-    <div class="field-help" id="senderNoteHelp">Shown in full during the final “Make a Wish” chapter, after the handwritten letter. Optional.</div>
+    <div class="field-help" id="senderNoteHelp">Shown in full when the recipient selects “Make a Wish.” Optional.</div>
     <details id="letterSettings" open>
       <summary>✉ Handwritten letter · personalize the surprise</summary>
       <div class="editor letter-editor">
         <div class="letter-editor-intro">A beautifully written letter plays automatically after the 100 wishes. Leave this empty for the ready-made, name-personalized letter—or write your own. Use <code>{name}</code> anywhere to insert the recipient’s name.</div>
-        <label class="field" for="letterInput"><span>Your letter (optional)</span><textarea id="letterInput" rows="7" maxlength="1800" placeholder="Dear {name},&#10;&#10;There are some people who make life feel more beautiful simply by being part of it…"></textarea></label>
+        <label class="field" for="letterInput"><span>Your letter (optional)</span><textarea id="letterInput" rows="7" maxlength="900" placeholder="Dear {name},&#10;&#10;I hope this year brings you memorable moments, new adventures, and many reasons to smile…"></textarea></label>
         <label class="field letter-sign-input" for="letterFrom"><span>Your signature (optional)</span><input id="letterFrom" type="text" maxlength="50" placeholder="Someone cheering for you"></label>
         <div class="row"><button type="button" class="btn primary" id="previewLetter">Preview handwritten letter</button></div>
-        <div class="field-help">Automatically opens, writes itself, and gently continues to the final wish. Recipients can read it again afterward.</div>
+        <div class="field-help">Best at 80–120 words, so the entire note fits on a single page without scrolling. The writing plays automatically; the recipient can revisit it anytime.</div>
       </div>
     </details>
     <details id="inboxSettings">
@@ -181,6 +154,7 @@
     <div class="wish-ornament" aria-hidden="true">✦ ✧ ✦</div>
     <h2 id="wishTitle">Make a wish</h2>
     <p id="wishHelp" class="wish-modal-help"></p>
+    <div class="wish-personal-note" id="wishPersonalNote" hidden><div class="wish-personal-note-label">A PERSONAL NOTE FOR YOU</div><p id="wishPersonalMessage"></p></div>
     <form id="wishForm">
       <label for="wishText">Your wish</label>
       <textarea id="wishText" name="message" rows="5" maxlength="1200" minlength="2" required placeholder="Write your birthday wish…"></textarea>
@@ -191,6 +165,6 @@
   </section>
 </div>
 
-<script defer src="app.js?v=15-20261106"></script>
+<script defer src="app.js?v=16-20261106-b"></script>
 
 </body></html>

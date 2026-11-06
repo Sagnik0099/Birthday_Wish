@@ -678,3 +678,183 @@ html.preview-playback .finale-actions #finaleEditorReturn {grid-column:1/-1;just
 /* Prevent the editor scroll position from obscuring the birthday finale. */
 html.preview-playback, html.preview-playback body {height:100%;overflow:hidden;}
 html.preview-playback .controls {visibility:hidden;}
+
+/* ===============================================================
+   V16 — Original wheel + quiet, non-romantic, single-sheet letter
+   =============================================================== */
+/* No mobile caption box below the wheel. The radial design is the feature. */
+.mobile-wish-ticker { display:none !important; }
+
+/* The finished wheel remains onscreen. Its only additions are TWO small
+   actions directly underneath it; no opaque panel, no title, no journal. */
+.stage .finale-section,
+html.gift-view .stage .finale-section,
+html.preview-playback .stage .finale-section {
+  position:absolute !important;
+  inset:auto 0 auto 0 !important;
+  top: min(var(--wheel-bottom, 74%), calc(100% - 113px)) !important;
+  height:auto !important;
+  min-height:0 !important;
+  display:block !important;
+  z-index:7 !important;
+  margin:0 !important;
+  padding:4px 13px 6px !important;
+  background:transparent !important;
+  backdrop-filter:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+  text-align:center;
+}
+.stage .finale-section[hidden] {display:none !important;}
+.stage .finale-section .finale-actions,
+html.gift-view .stage .finale-section .finale-actions,
+html.preview-playback .stage .finale-section .finale-actions {
+  display:flex !important;
+  flex-direction:row !important;
+  justify-content:center !important;
+  align-items:center !important;
+  flex-wrap:wrap !important;
+  gap:11px !important;
+  width:100%; max-width:570px; margin:auto;
+}
+.stage .finale-section .finale-actions button,
+html.gift-view .stage .finale-section .finale-actions button,
+html.preview-playback .stage .finale-section .finale-actions button {
+  position:relative !important;
+  inset:auto !important;
+  width:auto !important;
+  min-width:0 !important;
+  min-height:48px !important;
+  max-width:none !important;
+  flex: 0 1 220px !important;
+  grid-column:auto !important;
+  padding:11px 19px !important;
+  display:inline-flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  white-space:nowrap !important;
+  font:800 12px/1.3 var(--ui) !important;
+  letter-spacing:0 !important;
+  border-radius:999px !important;
+  transform:none !important;
+  opacity:1 !important;
+  animation:none !important;
+  cursor:pointer;
+  transition:box-shadow .25s ease,border-color .25s ease,background .25s ease;
+}
+.stage .finale-section .wish-open {
+  border:1px solid rgba(242,205,148,.82) !important;
+  color:#ffeccc !important;
+  background:rgba(40,21,64,.92) !important;
+  box-shadow:0 8px 25px rgba(0,0,0,.28) !important;
+}
+.stage .finale-section .keepsake-button {
+  border:1px solid rgba(242,205,148,.50) !important;
+  color:#f5dcc0 !important;
+  background:rgba(26,15,45,.82) !important;
+  box-shadow:0 8px 25px rgba(0,0,0,.19) !important;
+}
+.stage .finale-section .finale-actions button:hover {border-color:#ffe6b6 !important;box-shadow:0 8px 30px rgba(234,195,132,.25) !important;}
+@media(max-width:620px){
+  .stage .finale-section .finale-actions {flex-wrap:nowrap !important; gap:7px !important;}
+  .stage .finale-section .finale-actions button,
+  html.gift-view .stage .finale-section .finale-actions button {
+    min-height:43px !important;
+    flex:1 1 0 !important;
+    width:0 !important;
+    padding:9px 7px !important;
+    font:800 clamp(9px,2.6vw,12px)/1.2 var(--ui) !important;
+  }
+  .stage .finale-section { padding:2px 10px 6px !important; }
+}
+@media(max-height:530px){
+ .stage .finale-section .finale-actions button {min-height:38px !important;padding:7px 8px !important;}
+}
+
+/* A stationary single piece of parchment; nothing inside it scrolls.
+   The writer fits the full content BEFORE revealing the first glyph. */
+.letter-scene {overflow:hidden; background:
+  radial-gradient(ellipse at 15% 18%,rgba(105,72,63,.32),transparent 50%),
+  radial-gradient(ellipse at 83% 83%,rgba(107,68,65,.26),transparent 48%),
+  linear-gradient(155deg,#1e1927 0%,#342530 55%,#181522 100%); }
+.letter-scene-inner {height:100svh; min-height:0; box-sizing:border-box; overflow:hidden; padding:13px 13px max(13px,env(safe-area-inset-bottom,0px));}
+.letter-scene-label {color:#e9c8a4;letter-spacing:.23em;margin-bottom:10px;}
+.letter-paper-shell {width:min(94vw,650px); flex:0 1 auto;}
+.letter-paper {
+  height:min(76svh,650px); min-height:0 !important; max-height:none !important;
+  overflow:hidden !important; overscroll-behavior:none; scroll-behavior:auto;
+  padding:clamp(19px,3.2vw,31px) clamp(26px,5.5vw,49px) 16px;
+}
+.letter-paper-decor {color:#956848; opacity:.67; font-size:18px;letter-spacing:.6em;}
+.decor-top {margin:-3px 0 4px;}
+.decor-bottom {margin:8px 0 0;font-size:13px;}
+.letter-dateline {margin:0 0 5px;color:#755643;}
+.letter-heading {font:700 clamp(28px,4vw,39px)/1.04 'Caveat',cursive;color:#623d2d; transform:none;}
+.letter-divider {margin:5px auto 9px;}
+.letter-writing {
+  margin:0 !important;min-height:0 !important;
+  font-size:var(--letter-font-px,28px) !important;
+  line-height:var(--letter-leading,1.28) !important;
+  letter-spacing:0 !important;
+  white-space:pre-wrap;
+  overflow-wrap:break-word;
+  text-align:left;
+  contain:style;
+}
+.letter-writing .ink-glyph {visibility:hidden;}
+.letter-writing .ink-glyph.ink-visible {visibility:visible;}
+.letter-signature {opacity:0;visibility:hidden;transform:none;margin:10px 0 0; animation:none !important; transition:opacity .6s ease;}
+.letter-signature.visible {opacity:1;visibility:visible;}
+.letter-signature span {font-size:19px;color:#74503c;}
+.letter-signature strong {font-size:clamp(24px,4vw,35px);color:#734735;}
+.letter-compact {padding-top:15px;padding-bottom:9px;}
+.letter-compact .decor-top,.letter-compact .decor-bottom {display:none;}
+.letter-compact .letter-heading {font-size:28px;}
+.letter-compact .letter-dateline {margin:0 0 4px;}
+.letter-compact .letter-divider {margin:4px auto 6px;}
+.letter-compact .letter-signature {margin-top:7px;}
+.letter-footer {margin-top:9px;gap:6px;flex:none;}
+.letter-status {color:#e8d2bd;}
+.letter-continue {min-height:43px;padding:10px 19px; font-size:10px;max-width:95vw;}
+.envelope-seal {font:26px var(--display);}
+.wish-personal-note {background:rgba(255,240,218,.07);border:1px solid rgba(233,190,138,.25);border-radius:12px;padding:13px 16px;margin:0 auto 17px;max-width:480px;}
+.wish-personal-note-label {font:800 9px/1.5 var(--ui);letter-spacing:.16em;color:#eac591;text-align:center;margin-bottom:8px;}
+.wish-dialog .wish-personal-note p {color:#ffe9d9;font:italic 400 20px/1.4 var(--display);text-align:center;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;max-width:none;}
+@media(max-width:620px){
+ .letter-scene-inner {padding:10px 8px max(11px,env(safe-area-inset-bottom,0px));}
+ .letter-paper-shell {width:min(96vw,515px);}
+ .letter-paper {height:min(74svh,630px);padding:20px 25px 13px;}
+ .letter-heading {font-size:clamp(28px,8.8vw,35px);}
+ .letter-signature strong {font-size:29px;}
+ .letter-status {font-size:10px;}
+ .letter-scene-label {font-size:9px;margin-bottom:7px;}
+ .letter-footer{margin-top:8px;gap:5px;}
+ .letter-continue{min-height:42px;padding:9px 17px;}
+}
+@media(max-width:360px), (max-height:610px){
+ .letter-scene-inner {padding:8px 7px;}
+ .letter-paper {height:72svh;padding:15px 19px 9px;}
+ .letter-paper-decor {display:none;}
+ .letter-heading {font-size:28px;}
+ .letter-status {font-size:9px;}
+ .letter-continue {min-height:38px;padding:7px 15px;}
+}
+@media(prefers-reduced-motion:reduce){
+ .letter-signature{transition:none;}
+}
+
+@media(max-width:620px){.letter-signature strong{font-size:clamp(22px,6.7vw,28px);}}
+/* In the creator/editor view the original wheel needs its full room again
+   when playback finishes; the controls remain below the wheel, not over it. */
+@media(min-width:621px){
+  html:not(.gift-view) .stage.finale-visible {
+    flex: 0 0 max(800px,100svh) !important;
+    height:max(800px,100svh) !important;
+    min-height:max(800px,100svh) !important;
+  }
+}
+
+/* Rare V15 links containing exceptionally long (1,800-character) letters
+   remain complete rather than silently losing their last lines. */
+.letter-paper.legacy-letter-overflow { overflow-y:auto !important; }

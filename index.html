@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Great+Vibes&family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=19-20261107">
+<link rel="stylesheet" href="style.css?v=20-20261107">
 </head><body>
 
 <div class="opening" id="opening" hidden aria-label="Birthday surprise opening">
@@ -116,33 +116,48 @@
   </div>
 </section>
 
-<!-- A single, non-romantic handwritten letter. The original wheel and finale remain intact underneath. -->
-<div class="birthday-letter-overlay" id="birthdayLetter" hidden>
-  <section class="birthday-letter-scene" role="dialog" aria-modal="true" aria-labelledby="letterTitle" tabindex="-1">
-    <div class="birthday-letter-envelope" aria-hidden="true"><span class="birthday-letter-envelope-back"></span><span class="birthday-letter-envelope-peek"></span><span class="birthday-letter-folded" aria-hidden="true"><span></span></span><span class="birthday-letter-envelope-flap"></span><span class="birthday-letter-envelope-front"></span><span class="birthday-letter-envelope-seal">✦</span></div>
-    <article class="birthday-letter-paper" id="letterPaper" tabindex="0" aria-label="Your handwritten birthday letter">
-      <div class="birthday-letter-decor" aria-hidden="true">✿ <span>✧</span> ❀</div>
-      <div class="birthday-letter-overline">A LITTLE NOTE FOR YOUR BIRTHDAY</div>
-      <h2 class="birthday-letter-title" id="letterTitle">Dear friend,</h2>
-      <div class="birthday-letter-rule" aria-hidden="true"><span></span>✦<span></span></div>
-      <div class="birthday-letter-ink" id="letterInk" aria-hidden="true"></div>
-      <div class="birthday-letter-signature" id="letterSignature"></div>
-      <div class="birthday-letter-writing-hand" id="letterWritingHand" aria-hidden="true">
-        <svg viewBox="0 0 90 110" width="72" height="88" xmlns="http://www.w3.org/2000/svg" fill="none">
-          <path d="M20 99 67 14" stroke="#6c4037" stroke-width="6" stroke-linecap="round"/>
-          <path d="M21 97 66 16" stroke="#b38b59" stroke-width="2.5" stroke-linecap="round"/>
-          <path d="m20 99-5 8 2-10" fill="#3c2925"/>
-          <path d="M35 48c8-10 14-11 20-7l13 9c5 4 4 9 1 12l-5 5c5 5 7 11 5 17l-8 19-29-10c-6-11-8-22-5-31 1-6 4-10 8-14Z" fill="#bd8c6c" stroke="#915b4a" stroke-width="1.6"/>
-          <path d="M39 46c7-2 12 0 15 4l6 6M31 63c7-4 16-2 22 3M31 76c8-1 13 2 19 8" stroke="#8b5749" stroke-width="2.2" stroke-linecap="round" opacity=".55"/>
-          <path d="M38 48c-4 3-8 14-5 19 3 4 9 4 12 0l8-10c3-5-7-14-15-9Z" fill="#dcab85" stroke="#a46d5c" stroke-width="1.5"/>
-        </svg>
+<!-- One coordinated envelope-to-letter sequence; no decorative status labels or romance symbols. -->
+<div class="keepsake-overlay" id="birthdayLetter" hidden>
+  <section class="keepsake-scene" role="dialog" aria-modal="true" aria-labelledby="letterTitle" tabindex="-1">
+    <div class="keepsake-story" id="letterStory">
+      <div class="keepsake-envelope" id="letterEnvelope" aria-hidden="true">
+        <div class="keepsake-envelope-back"></div>
+        <div class="keepsake-folded-note" id="letterFoldedNote"><span class="fold-crease"></span></div>
+        <div class="keepsake-envelope-pocket"></div>
+        <div class="keepsake-envelope-flap" id="letterFlap"></div>
+        <div class="keepsake-envelope-seal" id="letterSeal">✦</div>
       </div>
-      <div class="birthday-letter-decor birthday-letter-decor-bottom" aria-hidden="true">✦ &nbsp; ❀ &nbsp; ✦</div>
-    </article>
-    <div class="birthday-letter-accessible" id="letterAccessible" aria-live="off"></div>
-
-
-    <button type="button" class="birthday-letter-return" id="closeLetter">Turn the page <span aria-hidden="true">↗</span></button>
+      <article class="keepsake-paper" id="letterPaper" tabindex="0" aria-label="Handwritten birthday letter">
+        <div class="keepsake-paper-content" id="letterPaperContent">
+          <div class="keepsake-flourish" aria-hidden="true">✦ &nbsp; ✧ &nbsp; ✦</div>
+          <div class="keepsake-overline">A LITTLE NOTE FOR YOUR BIRTHDAY</div>
+          <h2 class="keepsake-title" id="letterTitle">Dear friend,</h2>
+          <div class="keepsake-rule" aria-hidden="true"></div>
+          <div class="keepsake-ink" id="letterInk" aria-hidden="true"></div>
+          <div class="keepsake-signature" id="letterSignature"></div>
+          <div class="keepsake-bottom" aria-hidden="true">✧ &nbsp; ✦ &nbsp; ✧</div>
+        </div>
+        <div class="keepsake-writing-hand" id="letterWritingHand" aria-hidden="true">
+          <svg width="96" height="104" viewBox="0 0 120 132" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <!-- A complete stylized hand gripping a fountain pen, with cuff and four visible fingers. -->
+            <path d="M81 102c6-7 18-10 30-7l10 17-21 20-26-7Z" fill="#624e6c" stroke="#49374f" stroke-width="2"/>
+            <path d="M66 91c-8-10-8-20-3-31l10-19c4-8 13-10 20-4l16 17c7 8 9 16 5 26l-14 32c-4 8-12 13-22 10-8-3-9-17-12-31Z" fill="#c68f73" stroke="#8a584b" stroke-width="2"/>
+            <path d="M80 39c4-5 9-5 13-1l16 17c4 4 2 9-1 11-4 3-8 2-11-1L82 50" fill="#d7a183" stroke="#945e4d" stroke-width="2"/>
+            <path d="M75 47c4-5 10-5 14-1l17 17c4 4 3 9 0 12-4 4-9 3-12 0L76 58" fill="#d4a081" stroke="#945e4d" stroke-width="2"/>
+            <path d="M69 56c5-4 9-4 13 0l17 17c4 5 2 10-1 13-4 3-9 2-12-1L69 69" fill="#d7a483" stroke="#945e4d" stroke-width="2"/>
+            <path d="M67 67c5-4 10-3 13 1l13 15c3 4 2 9-2 12-4 3-9 1-12-2L64 79" fill="#d3a080" stroke="#945e4d" stroke-width="2"/>
+            <!-- Pen shaft and fine nib point near the left bottom. -->
+            <path d="M15 113 77 15" stroke="#352e39" stroke-width="6.5" stroke-linecap="round"/>
+            <path d="M16 111 76 16" stroke="#c09d72" stroke-width="2" stroke-linecap="round"/>
+            <path d="m15 113-7 11 1-13" fill="#2c262a"/>
+            <path d="M69 63c-5-5-14-6-20-1-6 5-6 13-1 16 5 4 11 3 16-2l10-10" fill="#e4b193" stroke="#955f50" stroke-width="2"/>
+            <path d="M103 116c-9 5-20 8-27 7" stroke="#e2b39a" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </article>
+    </div>
+    <div class="keepsake-accessible" id="letterAccessible"></div>
+    <button type="button" class="keepsake-return" id="closeLetter" disabled>Turn the page <span aria-hidden="true">↗</span></button>
   </section>
 </div>
 
@@ -162,6 +177,6 @@
   </section>
 </div>
 
-<script defer src="app.js?v=19-20261107"></script>
+<script defer src="app.js?v=20-20261107"></script>
 
 </body></html>

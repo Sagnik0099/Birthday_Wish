@@ -49,7 +49,19 @@
     view.hh = r.height / 2 / view.s;
     // Circle's bottom edge in CSS pixels. Finale is positioned here from the
     // beginning, so revealing it never pushes or moves the wheel.
-    stage.style.setProperty('--wheel-bottom', Math.round(r.height/2 + R_RING*view.s + (r.height < 540 ? 13 : 22))+'px');
+    const wheelBottom = r.height/2 + R_RING*view.s + (r.height < 540 ? 13 : 22);
+    stage.style.setProperty('--wheel-bottom', Math.round(wheelBottom)+'px');
+    // Reserve a distinct finale reading zone after the wheel ends. The wheel
+    // eases upward and slightly scales down, without changing its 100 wishes.
+    const compact = isGift && r.height < 650;
+    const scale = compact ? (r.height < 590 ? .77 : .82) : r.height < 760 ? .89 : r.height < 870 ? .945 : .96;
+    const rise = compact ? (r.height < 590 ? 68 : 59) : r.height < 760 ? 56 : 51;
+    const visibleWheelBottom = r.height/2 + (wheelBottom-r.height/2)*scale - rise;
+    const reserved = compact ? 148 : r.height < 760 ? 158 : 169;
+    const finalTop = Math.min(visibleWheelBottom + (compact ? 26 : 39), r.height-reserved);
+    stage.style.setProperty('--finale-top', Math.round(finalTop)+'px');
+    stage.style.setProperty('--finale-rise', rise+'px');
+    stage.style.setProperty('--finale-scale', scale);
     if (wishes && wishes.length) fitFont();
   }
 
@@ -62,6 +74,10 @@
   let letterAnimations = [];
   let letterFinishTimer = null;
   let letterHideTimer = null;
+  let letterSceneTimers = [];
+  let letterFlight = null;
+  let letterFlightToken = 0;
+  let handMotion = null;
   let letterReturnFocus = null;
   let letterScrollRAF = 0, letterScrollTimers = [], letterScrollTarget = 0, letterUserReading = false;
   let rng = Math.random, S, spokes, bokeh, stars, confetti, balloons, sparks, rockets, meteor, shock, fontPx = 10;
@@ -427,7 +443,8 @@
 
   cv.addEventListener('pointerdown', (e) => {
     const r = cv.getBoundingClientRect();
-    burst((e.clientX - r.left - r.width / 2) / view.s, (e.clientY - r.top - r.height / 2) / view.s, palette(rng()));
+    const scaled = stage.classList.contains('celebration-finished') && document.documentElement.classList.contains('gift-view') ? (parseFloat(getComputedStyle(stage).getPropertyValue('--finale-scale')) || 1) : 1;
+    burst((e.clientX - r.left - r.width / 2) / (view.s * scaled), (e.clientY - r.top - r.height / 2) / (view.s * scaled), palette(rng()));
   });
 
   $('copy').addEventListener('click', async () => {
@@ -653,166 +670,216 @@ Keep learning, laughing, and becoming more of the person you want to be. The bes
 
 Happy Birthday!`;
 
-  const letterStatus = $('letterStatus');
-  const letterProgress = $('letterProgress');
   const letterPaper = $('letterPaper');
+  const letterScene = letterOverlay.querySelector('.birthday-letter-scene');
+  const letterEnvelope = letterOverlay.querySelector('.birthday-letter-envelope');
+  const letterHand = $('letterWritingHand');
+  const motionReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sceneClasses = [
+    'scene-enter','scene-unseal','scene-extract','scene-unfold',
+    'scene-writing','scene-refold','scene-insert','scene-close-flap'
+  ];
+  const sceneLater = (delay, fn) => {
+    const id = setTimeout(fn, delay);
+    letterSceneTimers.push(id);
+    return id;
+  };
+  function clearSceneTimers() {
+    letterSceneTimers.forEach(clearTimeout);
+    letterSceneTimers=[];
+  }
   function stopInkFollowing() {
     cancelAnimationFrame(letterScrollRAF);letterScrollRAF = 0;
     for (const timer of letterScrollTimers) clearTimeout(timer);
     letterScrollTimers = [];
+    if (handMotion) { handMotion.cancel(); handMotion = null; }
   }
   function gentlyFollowWord(word) {
     if (letterUserReading || letterOverlay.hidden || !word.isConnected) return;
     const windowRect = letterInk.getBoundingClientRect();
     const rect = word.getBoundingClientRect();
-    if (rect.bottom > windowRect.bottom - 21) {
-      letterScrollTarget = Math.min(letterInk.scrollHeight - letterInk.clientHeight,
-        Math.max(letterScrollTarget, letterInk.scrollTop + rect.bottom - windowRect.bottom + 62));
+    if (rect.bottom > windowRect.bottom - 25) {
+      letterScrollTarget = Math.min(Math.max(0, letterInk.scrollHeight - letterInk.clientHeight),
+        Math.max(letterScrollTarget, letterInk.scrollTop + rect.bottom - windowRect.bottom + 46));
       if (letterScrollRAF) return;
       function easeToInk() {
         if (letterUserReading || letterOverlay.hidden) {letterScrollRAF=0;return;}
         const delta = letterScrollTarget - letterInk.scrollTop;
-        if (delta <= .65) {letterScrollRAF=0;return;}
-        letterInk.scrollTop += Math.max(.25, delta*.085);
+        if (delta <= .7) {letterScrollRAF=0;return;}
+        letterInk.scrollTop += Math.max(.23, delta*.09);
         letterScrollRAF = requestAnimationFrame(easeToInk);
       }
       letterScrollRAF = requestAnimationFrame(easeToInk);
     }
   }
+  function moveHandToWord(word, duration) {
+    if (letterOverlay.hidden || !word.isConnected || motionReduced) return;
+    if (handMotion) {handMotion.cancel();handMotion=null;}
+    const rect=word.getBoundingClientRect(), paperRect=letterPaper.getBoundingClientRect();
+    const atY=Math.max(8,Math.min(paperRect.height-67,rect.top-paperRect.top-24));
+    const fromX=Math.max(0,Math.min(paperRect.width-54,rect.left-paperRect.left-15));
+    const toX=Math.max(0,Math.min(paperRect.width-54,rect.right-paperRect.left-15));
+    letterHand.style.top=atY+'px';
+    letterHand.style.left=fromX+'px';
+    handMotion=letterHand.animate([
+      {transform:'translate3d(0,0,0) rotate(-13deg)'},
+      {transform:`translate3d(${toX-fromX}px, 1px,0) rotate(-10deg)`}
+    ],{duration:Math.max(160,duration),easing:'linear',fill:'forwards'});
+  }
   function cancelLetterWriting() {
-    clearTimeout(letterFinishTimer);
-    letterFinishTimer = null;
+    clearTimeout(letterFinishTimer);letterFinishTimer=null;
     stopInkFollowing();
-    for (const animation of letterAnimations) animation.cancel();
-    letterAnimations = [];
+    letterAnimations.forEach(animation=>animation.cancel());
+    letterAnimations=[];
+    letterHand.classList.remove('writing');
   }
   function resetBirthdayLetter() {
     cancelLetterWriting();
-    clearTimeout(letterHideTimer);
-    letterHideTimer = null;
-    letterOverlay.hidden = true;
+    clearTimeout(letterHideTimer);letterHideTimer=null;
+    clearSceneTimers();
+    letterFlightToken++;
+    if (letterFlight) {letterFlight.getAnimations().forEach(a=>a.cancel());letterFlight.remove();letterFlight=null;}
+    letterOverlay.hidden=true;
     letterOverlay.classList.remove('is-visible');
+    sceneClasses.forEach(c=>letterScene.classList.remove(c));
     document.body.classList.remove('birthday-letter-open');
-    letterReturn.classList.remove('is-ready');
-    letterReturn.disabled = true;
-    letterFinishedOnce = false;
-    letterUserReading = false;
+    letterReturn.classList.remove('is-ready');letterReturn.disabled=true;
+    letterFinishedOnce=false;letterUserReading=false;
   }
   function revealOriginalFinale() {
     if (S.wishPromptShown) return;
     const finale = $('finaleSection');
-    // Original birthday finale: special message + Make a Wish; letter replay added.
-    // The inbox is optional and must NEVER hide the main Make a Wish action.
     $('openWish').hidden = false;
     finale.hidden = false;
-    requestAnimationFrame(() => finale.classList.add('show'));
-    S.wishPromptShown = true;
+    // The last movement of the wheel is a gentle shift upward, creating
+    // actual space between its rim and the special message.
     stage.classList.add('celebration-finished');
+    requestAnimationFrame(()=>finale.classList.add('show'));
+    S.wishPromptShown = true;
   }
   function addLetterWords(paragraph, text, allWords) {
     for (const piece of text.split(/(\s+)/).filter(Boolean)) {
-      if (/^\s+$/.test(piece)) { paragraph.append(document.createTextNode(piece));continue; }
-      const word = document.createElement('span');
-      word.className = 'letter-word';
-      word.textContent = piece;
-      paragraph.append(word);
-      allWords.push(word);
+      if (/^\s+$/.test(piece)) {paragraph.append(document.createTextNode(piece));continue;}
+      const word=document.createElement('span');
+      word.className='letter-word';word.textContent=piece;
+      paragraph.append(word);allWords.push(word);
     }
-  }
-  function fitLetterToPaper() {
-    // Fixed DOM layout before writing. Never mutate the text during animation.
-    // Readable font first; longer letters scroll smoothly instead of shrinking to 11px.
-    letterInk.style.fontSize = '';
-    letterInk.scrollTop = 0;
-    letterScrollTarget = 0;
-    letterUserReading = false;
   }
   function finishLetterWriting() {
     cancelLetterWriting();
-    letterInk.querySelectorAll('.letter-word').forEach(word => word.classList.add('ink-visible'));
+    letterInk.querySelectorAll('.letter-word').forEach(word=>word.classList.add('ink-visible'));
     letterSignature.classList.add('signed');
-    letterProgress.style.width = '100%';
-    letterStatus.textContent = 'A little birthday note, just for you.';
-    letterReturn.disabled = false;
+    letterReturn.disabled=false;
     letterReturn.classList.add('is-ready');
-    letterFinishedOnce = true;
+    letterFinishedOnce=true;
   }
-  function openBirthdayLetter(again = false) {
-    cancelLetterWriting();
-    clearTimeout(letterHideTimer);letterHideTimer = null;
-    letterReturnFocus = document.activeElement;
-    letterOverlay.classList.remove('is-visible');
-    letterOverlay.hidden = false;
-    document.body.classList.add('birthday-letter-open');
-    letterReturn.disabled = true;
-    letterReturn.classList.remove('is-ready');
-    letterSignature.classList.remove('signed');
-    letterProgress.style.width = '0%';
-    letterStatus.textContent = again ? 'A little note worth revisiting…' : 'A little note is opening…';
-    const displayName = prettyName(person.name) || 'friend';
-    $('letterTitle').textContent = 'Dear ' + displayName + ',';
-    const source = (letterInput.value.trim() || DEFAULT_LETTER).slice(0,550);
-    const finalText = source.replace(/\{name\}/gi, displayName);
-    $('letterAccessible').textContent = 'Dear ' + displayName + '. ' + finalText;
-    letterSignature.textContent = letterFrom.value.trim() || 'With warm wishes';
-    const words = [];
-    letterInk.replaceChildren();
-    const paragraphs = finalText.split(/\n\s*\n|\n/).map(line=>line.trim()).filter(Boolean);
-    for (const line of paragraphs) {
-      const p = document.createElement('p');
-      addLetterWords(p,line,words);
-      letterInk.append(p);
-    }
-    fitLetterToPaper();
-    // Envelope opens in front of an already-laid-out sheet. No reflow as ink appears.
-    requestAnimationFrame(()=>letterOverlay.classList.add('is-visible'));
-    letterPaper.focus({preventScroll:true});
-    if (again || calm) {
-      words.forEach(word=>word.classList.add('ink-visible'));
-      letterSignature.classList.add('signed');
-      letterReturn.disabled = false;
-      letterReturn.classList.add('is-ready');
-      letterStatus.textContent = 'A little birthday note, just for you.';
-      letterProgress.style.width = '100%';
-      return;
-    }
-    let when = 2500;
-    letterStatus.textContent = 'The paper unfolds, then the words appear…';
-    words.forEach((word,index) => {
-      // Revealing already-positioned text with a clipping mask eliminates all text jumps.
-      const duration = Math.min(440, Math.max(150, 59 * [...word.textContent].length));
-      const animation = word.animate([
-        {clipPath:'inset(0 100% 0 0)'}, {clipPath:'inset(0 0 0 0)'}
-      ], {duration, delay:when, easing:'linear', fill:'both'});
+  function writeOnPaper(words) {
+    letterScene.classList.add('scene-writing');
+    if (!words.length || motionReduced) {finishLetterWriting();return;}
+    letterHand.classList.add('writing');
+    let elapsed=0;
+    words.forEach((word,index)=>{
+      const duration=Math.min(460,Math.max(155,58*[...word.textContent].length));
+      const animation=word.animate([
+        {clipPath:'inset(0 100% 0 0)'},
+        {clipPath:'inset(0 0 0 0)'}
+      ],{duration,delay:elapsed,easing:'linear',fill:'both'});
       letterAnimations.push(animation);
-      const start=when;
-      letterScrollTimers.push(setTimeout(() => {
+      letterScrollTimers.push(setTimeout(()=>{
         gentlyFollowWord(word);
-        letterProgress.style.width = ((index+1)*100/words.length).toFixed(2)+'%';
-      }, start));
-      when += duration + (/[.!?]$/.test(word.textContent) ? 125 : 24);
+        moveHandToWord(word,duration);
+      },elapsed));
+      elapsed+=duration+(/[.!?]$/.test(word.textContent)?135:30);
     });
-    letterFinishTimer = setTimeout(finishLetterWriting, when + 350);
+    letterFinishTimer=setTimeout(finishLetterWriting,elapsed+500);
+  }
+  function openBirthdayLetter(again=false) {
+    resetBirthdayLetter();
+    letterReturnFocus= document.activeElement;
+    const displayName=prettyName(person.name)||'friend';
+    $('letterTitle').textContent='Dear '+displayName+',';
+    const source=(letterInput.value.trim()||DEFAULT_LETTER).slice(0,550);
+    const text=source.replace(/\{name\}/gi,displayName);
+    $('letterAccessible').textContent='Dear '+displayName+'. '+text;
+    letterSignature.textContent=letterFrom.value.trim()||'With warm wishes';
+    letterSignature.classList.remove('signed');
+    const words=[];letterInk.replaceChildren();
+    for(const line of text.split(/\n\s*\n|\n/).map(s=>s.trim()).filter(Boolean)){
+      const p=document.createElement('p');addLetterWords(p,line,words);letterInk.append(p);
+    }
+    letterInk.scrollTop=0;letterScrollTarget=0;letterUserReading=false;
+    letterOverlay.hidden=false;
+    document.body.classList.add('birthday-letter-open');
+    // Entry is deliberately staged: closed envelope, flap, folded note,
+    // extraction, unfolding, then ink. The paper cannot precede the envelope.
+    requestAnimationFrame(()=>letterOverlay.classList.add('is-visible'));
+    letterScene.classList.add('scene-enter');
+    letterScene.focus({preventScroll:true});
+    if(motionReduced){
+      letterScene.classList.add('scene-unfold');
+      words.forEach(w=>w.classList.add('ink-visible'));
+      finishLetterWriting();return;
+    }
+    sceneLater(1000,()=>letterScene.classList.add('scene-unseal'));
+    sceneLater(1730,()=>letterScene.classList.add('scene-extract'));
+    sceneLater(2930,()=>letterScene.classList.add('scene-unfold'));
+    // Delay writing until after the parchment has COMPLETELY opened.
+    sceneLater(4750,()=>writeOnPaper(words));
+  }
+  function flyEnvelopeToReplay() {
+    revealOriginalFinale();
+    const target=$('readLetterAgain');
+    const startRect=letterEnvelope.getBoundingClientRect();
+    const targetRect=target.getBoundingClientRect();
+    // The travelling envelope is a clone. It becomes the very shape of the
+    // replay action, rather than popping away into an unrelated button.
+    if(letterFlight)letterFlight.remove();
+    letterFlight=letterEnvelope.cloneNode(true);
+    letterFlight.classList.add('birthday-letter-flight');
+    Object.assign(letterFlight.style,{
+      position:'fixed',left:startRect.left+'px',top:startRect.top+'px',
+      width:startRect.width+'px',height:startRect.height+'px',
+      transform:'none',opacity:'1',animation:'none',pointerEvents:'none',
+      margin:'0',zIndex:'150'
+    });
+    document.body.append(letterFlight);
+    letterOverlay.classList.remove('is-visible');
+    letterOverlay.hidden=true;
+    document.body.classList.remove('birthday-letter-open');
+    // Let the wheel and finale settle before the final morph.
+    const endRect=target.getBoundingClientRect();
+    const flightToken=++letterFlightToken;
+    const flight=letterFlight.animate([
+      {left:startRect.left+'px',top:startRect.top+'px',width:startRect.width+'px',height:startRect.height+'px',borderRadius:'5px',opacity:1},
+      {left:endRect.left+'px',top:endRect.top+'px',width:endRect.width+'px',height:endRect.height+'px',borderRadius:'999px',opacity:.04}
+    ],{duration:1050,easing:'cubic-bezier(.19,.88,.27,1)',fill:'forwards'});
+    target.classList.add('letter-arriving');
+    flight.finished.catch(()=>{}).then(()=>{
+      if (flightToken !== letterFlightToken) return;
+      if(letterFlight){letterFlight.remove();letterFlight=null;}
+      target.classList.remove('letter-arriving');
+      if ($('wishModal').hidden && letterOverlay.hidden) target.focus({preventScroll:true});
+    });
   }
   function closeBirthdayLetter() {
-    if(letterOverlay.hidden)return;
-    cancelLetterWriting();
-    letterOverlay.classList.remove('is-visible');
-    document.body.classList.remove('birthday-letter-open');
-    letterHideTimer=setTimeout(()=>{
-      letterOverlay.hidden=true;
-      revealOriginalFinale();
-      if(S.wishPromptShown && letterReturnFocus && letterReturnFocus.id==='readLetterAgain')
-        letterReturnFocus.focus({preventScroll:true});
-      else $('openWish').focus({preventScroll:true});
-    },calm?20:650);
+    if(letterOverlay.hidden || letterReturn.disabled)return;
+    cancelLetterWriting();clearSceneTimers();
+    letterReturn.disabled=true;letterReturn.classList.remove('is-ready');
+    if(motionReduced){
+      letterOverlay.hidden=true;document.body.classList.remove('birthday-letter-open');
+      revealOriginalFinale();$('readLetterAgain').focus({preventScroll:true});return;
+    }
+    letterScene.classList.remove('scene-writing');
+    letterScene.classList.add('scene-refold');
+    sceneLater(1050,()=>letterScene.classList.add('scene-insert'));
+    sceneLater(1980,()=>letterScene.classList.add('scene-close-flap'));
+    sceneLater(2700,flyEnvelopeToReplay);
   }
-  // Respect a reader who has chosen to scroll or interact; don't auto-pull the paper.
   ['wheel','touchstart','pointerdown'].forEach(type=>letterInk.addEventListener(type,()=>{
     letterUserReading=true;cancelAnimationFrame(letterScrollRAF);letterScrollRAF=0;
   },{passive:true}));
   letterPaper.addEventListener('keydown',event=>{
-    if(['ArrowDown','ArrowUp','PageDown','PageUp','Home','End',' '].includes(event.key)) {
+    if(['ArrowDown','ArrowUp','PageDown','PageUp','Home','End',' '].includes(event.key)){
       letterUserReading=true;cancelAnimationFrame(letterScrollRAF);letterScrollRAF=0;
     }
   });
@@ -820,17 +887,13 @@ Happy Birthday!`;
   $('readLetterAgain').addEventListener('click',()=>openBirthdayLetter(true));
   addEventListener('keydown',event=>{
     if(letterOverlay.hidden)return;
-    if(event.key==='Escape') {
-      event.preventDefault();
-      // The letter still gets its ending if the reader chooses Escape.
-      closeBirthdayLetter();
-    }
-    if(event.key==='Tab') {
+    if(event.key==='Escape' && !letterReturn.disabled){event.preventDefault();closeBirthdayLetter();}
+    if(event.key==='Tab'){
       const enabled=[...letterOverlay.querySelectorAll('button:not(:disabled),[tabindex="0"]')].filter(el=>el.getClientRects().length);
       if(!enabled.length)return;
       const first=enabled[0],last=enabled[enabled.length-1];
-      if(event.shiftKey && document.activeElement===first){event.preventDefault();last.focus()}
-      else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first.focus()}
+      if(event.shiftKey && document.activeElement===first){event.preventDefault();last.focus();}
+      else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first.focus();}
     }
   });
 

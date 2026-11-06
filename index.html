@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Great+Vibes&family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=18-20261107">
+<link rel="stylesheet" href="style.css?v=19-20261107">
 </head><body>
 
 <div class="opening" id="opening" hidden aria-label="Birthday surprise opening">
@@ -119,7 +119,7 @@
 <!-- A single, non-romantic handwritten letter. The original wheel and finale remain intact underneath. -->
 <div class="birthday-letter-overlay" id="birthdayLetter" hidden>
   <section class="birthday-letter-scene" role="dialog" aria-modal="true" aria-labelledby="letterTitle" tabindex="-1">
-    <div class="birthday-letter-envelope" aria-hidden="true"><span class="birthday-letter-envelope-back"></span><span class="birthday-letter-envelope-peek"></span><span class="birthday-letter-envelope-flap"></span><span class="birthday-letter-envelope-front"></span><span class="birthday-letter-envelope-seal">✦</span></div>
+    <div class="birthday-letter-envelope" aria-hidden="true"><span class="birthday-letter-envelope-back"></span><span class="birthday-letter-envelope-peek"></span><span class="birthday-letter-folded" aria-hidden="true"><span></span></span><span class="birthday-letter-envelope-flap"></span><span class="birthday-letter-envelope-front"></span><span class="birthday-letter-envelope-seal">✦</span></div>
     <article class="birthday-letter-paper" id="letterPaper" tabindex="0" aria-label="Your handwritten birthday letter">
       <div class="birthday-letter-decor" aria-hidden="true">✿ <span>✧</span> ❀</div>
       <div class="birthday-letter-overline">A LITTLE NOTE FOR YOUR BIRTHDAY</div>
@@ -127,11 +127,21 @@
       <div class="birthday-letter-rule" aria-hidden="true"><span></span>✦<span></span></div>
       <div class="birthday-letter-ink" id="letterInk" aria-hidden="true"></div>
       <div class="birthday-letter-signature" id="letterSignature"></div>
+      <div class="birthday-letter-writing-hand" id="letterWritingHand" aria-hidden="true">
+        <svg viewBox="0 0 90 110" width="72" height="88" xmlns="http://www.w3.org/2000/svg" fill="none">
+          <path d="M20 99 67 14" stroke="#6c4037" stroke-width="6" stroke-linecap="round"/>
+          <path d="M21 97 66 16" stroke="#b38b59" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="m20 99-5 8 2-10" fill="#3c2925"/>
+          <path d="M35 48c8-10 14-11 20-7l13 9c5 4 4 9 1 12l-5 5c5 5 7 11 5 17l-8 19-29-10c-6-11-8-22-5-31 1-6 4-10 8-14Z" fill="#bd8c6c" stroke="#915b4a" stroke-width="1.6"/>
+          <path d="M39 46c7-2 12 0 15 4l6 6M31 63c7-4 16-2 22 3M31 76c8-1 13 2 19 8" stroke="#8b5749" stroke-width="2.2" stroke-linecap="round" opacity=".55"/>
+          <path d="M38 48c-4 3-8 14-5 19 3 4 9 4 12 0l8-10c3-5-7-14-15-9Z" fill="#dcab85" stroke="#a46d5c" stroke-width="1.5"/>
+        </svg>
+      </div>
       <div class="birthday-letter-decor birthday-letter-decor-bottom" aria-hidden="true">✦ &nbsp; ❀ &nbsp; ✦</div>
     </article>
     <div class="birthday-letter-accessible" id="letterAccessible" aria-live="off"></div>
-    <div class="birthday-letter-status" id="letterStatus" aria-live="polite">A little note is opening…</div>
-    <div class="birthday-letter-progress" aria-hidden="true"><span id="letterProgress"></span></div>
+
+
     <button type="button" class="birthday-letter-return" id="closeLetter">Turn the page <span aria-hidden="true">↗</span></button>
   </section>
 </div>
@@ -152,6 +162,6 @@
   </section>
 </div>
 
-<script defer src="app.js?v=18-20261107"></script>
+<script defer src="app.js?v=19-20261107"></script>
 
 </body></html>

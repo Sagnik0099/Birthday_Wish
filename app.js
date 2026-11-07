@@ -794,9 +794,9 @@ Happy Birthday!`;
     if (!el || !el.isConnected || letterOverlay.hidden || letterUserReading) return;
     const paperBox=letterPaper.getBoundingClientRect();
     const rect=el.getBoundingClientRect();
-    // The ink nib is about 13px from the left and 72px from the top.
-    letterHand.style.left=Math.max(-10,Math.min(paperBox.width-45,rect.right-paperBox.left-13))+'px';
-    letterHand.style.top=Math.max(-32,Math.min(paperBox.height-72,rect.bottom-paperBox.top-72))+'px';
+    // The ink nib is about 16px from the left and 78px from the top.
+    letterHand.style.left=Math.max(-12,Math.min(paperBox.width-50,rect.right-paperBox.left-16))+'px';
+    letterHand.style.top=Math.max(-36,Math.min(paperBox.height-78,rect.bottom-paperBox.top-78))+'px';
   }
   function followLetterGlyph(el) {
     if (letterUserReading || !el.isConnected || letterOverlay.hidden) return;
